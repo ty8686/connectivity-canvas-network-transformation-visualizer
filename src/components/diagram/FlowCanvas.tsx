@@ -1,4 +1,4 @@
-import React, { useCallback, useRef, useMemo } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { ReactFlow, Controls, NodeTypes, EdgeTypes, useReactFlow, DefaultEdgeOptions } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEditorStore } from '@/store/editor-store';
@@ -76,10 +76,10 @@ export function FlowCanvas() {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        snapToGrid
-        snapGrid={[20, 20]}
         deleteKeyCode={['Backspace', 'Delete']}
         defaultEdgeOptions={defaultEdgeOptions}
+        // Client feedback: No grid lag, remove snapToGrid
+        snapToGrid={false}
       >
         <Controls showInteractive={false} className="custom-controls" />
       </ReactFlow>

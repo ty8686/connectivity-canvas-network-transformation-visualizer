@@ -28,8 +28,8 @@ interface EditorState {
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
-  updateNodeData: (id: string, data: any) => void;
-  updateEdgeData: (id: string, data: any) => void;
+  updateNodeData: (id: string, data: Record<string, unknown>) => void;
+  updateEdgeData: (id: string, data: Record<string, unknown>) => void;
   addNode: (node: Node) => void;
   deleteNode: (id: string) => void;
   deleteEdge: (id: string) => void;
@@ -77,7 +77,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const calculatedLatency = Math.min(600, 40 + (totalWeight * 25));
     set({
       latency: calculatedLatency,
-      hops: edges.length,
+      hops: nodes.length,
       latencyDelta: 0,
       hopsDelta: 0
     });
@@ -86,7 +86,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const state = get();
     if (mode === state.mode) return;
     if (mode === 'future') {
-      // Backup current legacy state before transformation
       set({ legacyBackup: { nodes: state.nodes, edges: state.edges } });
       const originNodes = state.nodes.filter(n => ['database', 'server', 'harddrive'].includes(n.data?.iconType as string));
       const userNodes = state.nodes.filter(n => n.data?.iconType === 'users');
@@ -122,7 +121,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       });
       set({ mode, nodes: newNodes, edges: newEdges });
     } else {
-      // Restore from backup if exists, else default demo
       if (state.legacyBackup) {
         set({ mode, nodes: state.legacyBackup.nodes, edges: state.legacyBackup.edges });
       } else {
@@ -144,8 +142,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     get().calculateMetrics();
   },
   onConnect: (connection) => {
-    const edge = { ...connection, id: `e-${Date.now()}`, type: 'sketchy', animated: true, data: { weight: 1, label: '' } };
-    set({ edges: addEdge(edge, get().edges) as Edge[] });
+    const edge: Edge = { 
+      ...connection, 
+      id: `e-${Date.now()}`, 
+      type: 'sketchy', 
+      animated: true, 
+      data: { weight: 1, label: '' } 
+    };
+    set({ edges: addEdge(edge, get().edges) });
     get().calculateMetrics();
   },
   updateNodeData: (id, data) => {
@@ -178,11 +182,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   fetchProjects: async () => {
     try {
       const response = await api<{ items: Project[] }>('/api/projects');
-      if (response && response.items) {
-        set({ projects: response.items });
-      } else {
-        set({ projects: [] });
-      }
+      set({ projects: response?.items ?? [] });
     } catch (err) {
       console.error("Fetch projects failed:", err);
       set({ projects: [] });
@@ -222,7 +222,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         hops: project.metadata.hops,
         mode: project.metadata.hops > 1 ? 'legacy' : 'future',
         isLoading: false,
-        legacyBackup: null // Reset backup on load
+        legacyBackup: null
       });
       get().calculateMetrics();
     } catch (err) {

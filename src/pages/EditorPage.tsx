@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Home, Save, Rewind, Play, FastForward, Zap, ShieldAlert, Globe, Activity } from 'lucide-react';
+import { ChevronRight, Home, Save, Rewind, Play, FastForward, Zap, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FlowCanvas } from '@/components/diagram/FlowCanvas';
 import { ComponentToolbox } from '@/components/diagram/ComponentToolbox';
@@ -59,10 +59,10 @@ export default function EditorPage() {
           </div>
           <div className="hidden sm:flex items-center bg-gray-50 border border-border rounded-lg px-3 py-1.5 gap-4">
             <div className="flex items-center gap-2">
-              <Activity className={cn("w-3.5 h-3.5", mode === 'legacy' ? "text-red-500" : "text-green-500")} />
+              <Activity className={cn("w-3.5 h-3.5", mode === 'legacy' ? "text-muted-foreground" : "text-green-500")} />
               <div className="flex flex-col">
                 <span className="text-[8px] font-black uppercase text-muted-foreground leading-none">Latency</span>
-                <span className={cn("text-xs font-black tracking-tighter", mode === 'legacy' ? "text-red-500" : "text-green-600")}>
+                <span className={cn("text-xs font-black tracking-tighter", mode === 'legacy' ? "text-muted-foreground" : "text-green-600")}>
                   {Math.round(latency)}ms
                 </span>
               </div>
@@ -74,12 +74,13 @@ export default function EditorPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center bg-gray-100 p-1 rounded-full border border-border w-[240px] md:w-[280px] relative shadow-inner shrink-0">
+        {/* FEEDBACK: Legacy (grey/off) and Cloudflare (orange/on) */}
+        <div className="flex items-center bg-gray-100 p-1 rounded-full border border-border w-[240px] md:w-[300px] relative shadow-inner shrink-0">
           <button
             onClick={() => setMode('legacy')}
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-1.5 px-3 md:px-4 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all duration-300 z-10",
-              mode === 'legacy' ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              mode === 'legacy' ? "bg-white text-muted-foreground shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
             )}
           >
             Legacy
@@ -90,10 +91,10 @@ export default function EditorPage() {
               "flex-1 flex items-center justify-center gap-2 py-1.5 px-3 md:px-4 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all duration-300 z-10",
               mode === 'future'
                 ? "bg-[#F38020] text-white shadow-[0_0_15px_rgba(243,128,32,0.4)]"
-                : "text-muted-foreground hover:text-foreground"
+                : "text-muted-foreground/60 hover:text-muted-foreground"
             )}
           >
-            <Zap className={cn("w-3 h-3", mode === 'future' ? "fill-current" : "")} /> Edge
+            <Zap className={cn("w-3 h-3", mode === 'future' ? "fill-current" : "")} /> Cloudflare
           </button>
         </div>
         <div className="flex items-center gap-2 md:gap-4 flex-1 justify-end">
