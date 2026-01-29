@@ -79,7 +79,8 @@ function updateWranglerJsonc() {
 function runSetupCommands() {
     const commands = [
     "bun add @xyflow/react@^12.0.0",
-    "bun add dagre@^0.8.5"
+    "bun add dagre@^0.8.5",
+    "bun add recharts"
 ];
     
     if (commands.length === 0) {
