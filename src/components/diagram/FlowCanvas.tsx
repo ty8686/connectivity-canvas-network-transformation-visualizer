@@ -24,6 +24,7 @@ export function FlowCanvas() {
   const addNode = useEditorStore(s => s.addNode);
   const setSelectedNodeId = useEditorStore(s => s.setSelectedNodeId);
   const setSelectedEdgeId = useEditorStore(s => s.setSelectedEdgeId);
+  const setHoveredNodeId = useEditorStore(s => s.setHoveredNodeId);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -60,6 +61,12 @@ export function FlowCanvas() {
     setSelectedNodeId(null);
     setSelectedEdgeId(null);
   }, [setSelectedNodeId, setSelectedEdgeId]);
+  const onNodeMouseEnter = useCallback((_: React.MouseEvent, node: any) => {
+    setHoveredNodeId(node.id);
+  }, [setHoveredNodeId]);
+  const onNodeMouseLeave = useCallback(() => {
+    setHoveredNodeId(null);
+  }, [setHoveredNodeId]);
   return (
     <div className="w-full h-full bg-[#fdfdfd]" ref={reactFlowWrapper}>
       <ReactFlow
@@ -73,12 +80,13 @@ export function FlowCanvas() {
         onNodeClick={onNodeClick}
         onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
+        onNodeMouseEnter={onNodeMouseEnter}
+        onNodeMouseLeave={onNodeMouseLeave}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
         defaultEdgeOptions={defaultEdgeOptions}
-        // Client feedback: No grid lag, remove snapToGrid
         snapToGrid={false}
       >
         <Controls showInteractive={false} className="custom-controls" />

@@ -4,6 +4,10 @@ import { DEMO_LEGACY_GRAPH } from '@/lib/demo-data';
 import { api } from '@/lib/api-client';
 import type { Project } from '@shared/types';
 export type ViewMode = 'legacy' | 'future';
+interface PreviewMetrics {
+  latency: number;
+  hops: number;
+}
 interface EditorState {
   projectId: string | null;
   projectTitle: string;
@@ -14,17 +18,20 @@ interface EditorState {
   projects: Project[];
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
+  hoveredNodeId: string | null;
   simulationSpeed: number;
   isLoading: boolean;
   latency: number;
   hops: number;
   latencyDelta: number;
   hopsDelta: number;
+  previewMetrics: PreviewMetrics | null;
   setMode: (mode: ViewMode) => void;
   setProjectTitle: (title: string) => void;
   setSimulationSpeed: (speed: number) => void;
   setSelectedNodeId: (id: string | null) => void;
   setSelectedEdgeId: (id: string | null) => void;
+  setHoveredNodeId: (id: string | null) => void;
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
@@ -40,6 +47,38 @@ interface EditorState {
   createNewProject: () => void;
   calculateMetrics: () => void;
 }
+// Simple Dijkstra Implementation
+function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, targetIconTypes: string[]) {
+  const adjacency: Record<string, { to: string; weight: number }[]> = {};
+  edges.forEach(edge => {
+    if (!adjacency[edge.source]) adjacency[edge.source] = [];
+    const weight = Number(edge.data?.weight) || 1;
+    adjacency[edge.source].push({ to: edge.target, weight });
+  });
+  const distances: Record<string, number> = { [startNodeId]: 0 };
+  const hopsCount: Record<string, number> = { [startNodeId]: 0 };
+  const visited = new Set<string>();
+  const pq: [string, number][] = [[startNodeId, 0]];
+  while (pq.length > 0) {
+    pq.sort((a, b) => a[1] - b[1]);
+    const [u, d] = pq.shift()!;
+    if (visited.has(u)) continue;
+    visited.add(u);
+    const node = nodes.find(n => n.id === u);
+    if (node && targetIconTypes.includes(String(node.data?.iconType)) && u !== startNodeId) {
+      return { latency: d * 15 + 10, hops: hopsCount[u] };
+    }
+    (adjacency[u] || []).forEach(({ to, weight }) => {
+      const newDist = d + weight;
+      if (!distances[to] || newDist < distances[to]) {
+        distances[to] = newDist;
+        hopsCount[to] = (hopsCount[u] || 0) + 1;
+        pq.push([to, newDist]);
+      }
+    });
+  }
+  return null;
+}
 export const useEditorStore = create<EditorState>((set, get) => ({
   projectId: null,
   projectTitle: "New Connectivity Canvas",
@@ -50,37 +89,48 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   projects: [],
   selectedNodeId: null,
   selectedEdgeId: null,
+  hoveredNodeId: null,
   simulationSpeed: 1.0,
   isLoading: false,
   latency: 240,
   hops: 8,
   latencyDelta: 0,
   hopsDelta: 0,
+  previewMetrics: null,
   calculateMetrics: () => {
-    const { nodes, edges, mode } = get();
-    const legacyBaselineLatency = 240;
-    const legacyBaselineHops = 8;
-    if (mode === 'future') {
-      const futureLatency = 12;
-      const futureHops = 1;
-      const lDelta = Math.round(((legacyBaselineLatency - futureLatency) / Math.max(1, legacyBaselineLatency)) * 100);
-      const hDelta = legacyBaselineHops / Math.max(1, futureHops);
-      set({
-        latency: futureLatency,
-        hops: futureHops,
-        latencyDelta: lDelta,
-        hopsDelta: hDelta
-      });
-      return;
+    const { nodes, edges, mode, hoveredNodeId } = get();
+    const targetIcons = ['database', 'server', 'harddrive'];
+    const userNodes = nodes.filter(n => n.data?.iconType === 'users');
+    // Calculate paths for all user nodes to get global average
+    const paths = userNodes.map(u => findShortestPath(nodes, edges, u.id, targetIcons)).filter(Boolean) as PreviewMetrics[];
+    const avgLatency = paths.length > 0 
+      ? paths.reduce((acc, p) => acc + p.latency, 0) / paths.length 
+      : (mode === 'future' ? 12 : 240);
+    const avgHops = paths.length > 0 
+      ? paths.reduce((acc, p) => acc + p.hops, 0) / paths.length 
+      : (mode === 'future' ? 1 : 8);
+    // Calculate specific preview if hovered
+    let preview: PreviewMetrics | null = null;
+    if (hoveredNodeId) {
+      const isUser = nodes.find(n => n.id === hoveredNodeId)?.data?.iconType === 'users';
+      if (isUser) {
+        preview = findShortestPath(nodes, edges, hoveredNodeId, targetIcons);
+      }
     }
-    const totalWeight = edges.reduce((acc, edge) => acc + (Number(edge.data?.weight) || 1), 0);
-    const calculatedLatency = Math.min(600, 40 + (totalWeight * 25));
+    const legacyBaselineLatency = 240;
+    const lDelta = Math.round(((legacyBaselineLatency - avgLatency) / Math.max(1, legacyBaselineLatency)) * 100);
+    const hDelta = Math.round((8 / Math.max(1, avgHops)) * 10) / 10;
     set({
-      latency: calculatedLatency,
-      hops: nodes.length,
-      latencyDelta: 0,
-      hopsDelta: 0
+      latency: avgLatency,
+      hops: Math.round(avgHops),
+      latencyDelta: lDelta,
+      hopsDelta: hDelta,
+      previewMetrics: preview
     });
+  },
+  setHoveredNodeId: (id) => {
+    set({ hoveredNodeId: id });
+    get().calculateMetrics();
   },
   setMode: (mode) => {
     const state = get();

@@ -62,6 +62,7 @@ export const SketchyEdge = ({
         )}
       </EdgeLabelRenderer>
       <motion.circle
+        key={`packet-${id}-${edgePath}`}
         r={mode === 'future' ? "4" : String(2 + (weight / 2))}
         fill={mode === 'future' ? '#F38020' : '#2D2D2D'}
         className="packet-glow"

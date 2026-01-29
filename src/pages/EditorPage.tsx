@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Home, Save, Rewind, Play, FastForward, Zap, Activity } from 'lucide-react';
+import { ChevronRight, Home, Save, Rewind, Play, FastForward, Zap, Activity, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FlowCanvas } from '@/components/diagram/FlowCanvas';
 import { ComponentToolbox } from '@/components/diagram/ComponentToolbox';
@@ -26,8 +26,10 @@ export default function EditorPage() {
   const isLoading = useEditorStore(s => s.isLoading);
   const selectedNodeId = useEditorStore(s => s.selectedNodeId);
   const selectedEdgeId = useEditorStore(s => s.selectedEdgeId);
-  const latency = useEditorStore(s => s.latency);
-  const hops = useEditorStore(s => s.hops);
+  const hoveredNodeId = useEditorStore(s => s.hoveredNodeId);
+  const globalLatency = useEditorStore(s => s.latency);
+  const globalHops = useEditorStore(s => s.hops);
+  const previewMetrics = useEditorStore(s => s.previewMetrics);
   useEffect(() => {
     if (projectIdParam) {
       loadProject(projectIdParam);
@@ -41,6 +43,9 @@ export default function EditorPage() {
       toast.error("Failed to save work");
     }
   };
+  const currentLatency = previewMetrics ? previewMetrics.latency : globalLatency;
+  const currentHops = previewMetrics ? previewMetrics.hops : globalHops;
+  const isPreviewMode = !!previewMetrics;
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden font-sans">
       <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-white z-30 shadow-sm gap-4">
@@ -57,24 +62,36 @@ export default function EditorPage() {
               placeholder="Unnamed Canvas..."
             />
           </div>
-          <div className="hidden sm:flex items-center bg-gray-50 border border-border rounded-lg px-3 py-1.5 gap-4">
+          <div className={cn(
+            "hidden sm:flex items-center bg-gray-50 border rounded-lg px-3 py-1.5 gap-4 transition-all duration-300",
+            isPreviewMode ? "border-[#F38020] bg-orange-50/30 scale-105 shadow-sm" : "border-border"
+          )}>
             <div className="flex items-center gap-2">
-              <Activity className={cn("w-3.5 h-3.5", mode === 'legacy' ? "text-muted-foreground" : "text-green-500")} />
+              <Activity className={cn("w-3.5 h-3.5", mode === 'legacy' ? "text-muted-foreground" : "text-green-500", isPreviewMode && "animate-pulse")} />
               <div className="flex flex-col">
-                <span className="text-[8px] font-black uppercase text-muted-foreground leading-none">Latency</span>
-                <span className={cn("text-xs font-black tracking-tighter", mode === 'legacy' ? "text-muted-foreground" : "text-green-600")}>
-                  {Math.round(latency)}ms
+                <span className="text-[8px] font-black uppercase text-muted-foreground leading-none">
+                  {isPreviewMode ? "Path Latency" : "Avg Latency"}
+                </span>
+                <span className={cn(
+                  "text-xs font-black tracking-tighter transition-colors",
+                  mode === 'legacy' ? "text-muted-foreground" : "text-green-600",
+                  isPreviewMode && "text-[#F38020]"
+                )}>
+                  {Math.round(currentLatency)}ms
                 </span>
               </div>
             </div>
             <div className="w-px h-6 bg-border" />
             <div className="flex flex-col">
-              <span className="text-[8px] font-black uppercase text-muted-foreground leading-none">Hops</span>
-              <span className="text-xs font-black text-foreground">{hops}</span>
+              <span className="text-[8px] font-black uppercase text-muted-foreground leading-none">
+                {isPreviewMode ? "Path Hops" : "Avg Hops"}
+              </span>
+              <span className={cn("text-xs font-black transition-colors", isPreviewMode ? "text-[#F38020]" : "text-foreground")}>
+                {currentHops}
+              </span>
             </div>
           </div>
         </div>
-        {/* FEEDBACK: Legacy (grey/off) and Cloudflare (orange/on) */}
         <div className="flex items-center bg-gray-100 p-1 rounded-full border border-border w-[240px] md:w-[300px] relative shadow-inner shrink-0">
           <button
             onClick={() => setMode('legacy')}
