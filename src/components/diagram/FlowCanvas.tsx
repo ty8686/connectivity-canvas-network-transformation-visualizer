@@ -1,100 +1,35 @@
-import React, { useCallback, useRef, useMemo } from 'react';
-import { ReactFlow, Controls, NodeTypes, EdgeTypes, useReactFlow, DefaultEdgeOptions } from '@xyflow/react';
+import React, { useMemo } from 'react';
+import { ReactFlow, Background, Controls, NodeTypes, EdgeTypes } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEditorStore } from '@/store/editor-store';
 import { SketchyNode } from './node-types';
 import { SketchyEdge } from './edge-types';
-import { useShallow } from 'zustand/react/shallow';
-/**
- * STATIC CONSTANTS: Defined outside the component to ensure absolute reference stability.
- * This resolves React Flow warning #002 and prevents unnecessary re-initializations.
- */
-const NODE_TYPES: NodeTypes = {
+const nodeTypes: NodeTypes = {
   sketchy: SketchyNode,
 };
-const EDGE_TYPES: EdgeTypes = {
+const edgeTypes: EdgeTypes = {
   sketchy: SketchyEdge,
 };
-const DEFAULT_EDGE_OPTIONS: DefaultEdgeOptions = {
-  type: 'sketchy',
-  animated: true,
-  data: { weight: 1, label: '' }
-};
 export function FlowCanvas() {
-  const nodes = useEditorStore(useShallow(s => s.nodes));
-  const edges = useEditorStore(useShallow(s => s.edges));
+  const nodes = useEditorStore(s => s.nodes);
+  const edges = useEditorStore(s => s.edges);
   const onNodesChange = useEditorStore(s => s.onNodesChange);
   const onEdgesChange = useEditorStore(s => s.onEdgesChange);
-  const onConnect = useEditorStore(s => s.onConnect);
-  const addNode = useEditorStore(s => s.addNode);
-  const setSelectedNodeId = useEditorStore(s => s.setSelectedNodeId);
-  const setSelectedEdgeId = useEditorStore(s => s.setSelectedEdgeId);
-  const setHoveredNodeId = useEditorStore(s => s.setHoveredNodeId);
-  const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const { screenToFlowPosition } = useReactFlow();
-  const onDragOver = useCallback((event: React.DragEvent) => {
-    event.preventDefault();
-    event.dataTransfer.dropEffect = 'move';
-  }, []);
-  const onDrop = useCallback(
-    (event: React.DragEvent) => {
-      event.preventDefault();
-      const dataStr = event.dataTransfer.getData('application/reactflow');
-      if (!dataStr) return;
-      const { nodeType, iconType, label } = JSON.parse(dataStr);
-      const position = screenToFlowPosition({
-        x: event.clientX,
-        y: event.clientY,
-      });
-      const newNode = {
-        id: `${iconType}-${Date.now()}`,
-        type: nodeType,
-        position,
-        data: { label, iconType },
-      };
-      addNode(newNode);
-    },
-    [screenToFlowPosition, addNode]
-  );
-  const onNodeClick = useCallback((_: React.MouseEvent, node: any) => {
-    setSelectedNodeId(node.id);
-  }, [setSelectedNodeId]);
-  const onEdgeClick = useCallback((_: React.MouseEvent, edge: any) => {
-    setSelectedEdgeId(edge.id);
-  }, [setSelectedEdgeId]);
-  const onPaneClick = useCallback(() => {
-    setSelectedNodeId(null);
-    setSelectedEdgeId(null);
-  }, [setSelectedNodeId, setSelectedEdgeId]);
-  const onNodeMouseEnter = useCallback((_: React.MouseEvent, node: any) => {
-    setHoveredNodeId(node.id);
-  }, [setHoveredNodeId]);
-  const onNodeMouseLeave = useCallback(() => {
-    setHoveredNodeId(null);
-  }, [setHoveredNodeId]);
   return (
-    <div className="w-full h-full bg-[#fdfdfd]" ref={reactFlowWrapper}>
+    <div className="w-full h-full bg-white dot-grid">
       <ReactFlow
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
-        onConnect={onConnect}
-        onDrop={onDrop}
-        onDragOver={onDragOver}
-        onNodeClick={onNodeClick}
-        onEdgeClick={onEdgeClick}
-        onPaneClick={onPaneClick}
-        onNodeMouseEnter={onNodeMouseEnter}
-        onNodeMouseLeave={onNodeMouseLeave}
-        nodeTypes={NODE_TYPES}
-        edgeTypes={EDGE_TYPES}
+        nodeTypes={nodeTypes}
+        edgeTypes={edgeTypes}
         fitView
-        deleteKeyCode={['Backspace', 'Delete']}
-        defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
-        snapToGrid={false}
+        snapToGrid
+        snapGrid={[20, 20]}
       >
-        <Controls showInteractive={false} className="custom-controls" />
+        <Background color="#ccc" gap={20} />
+        <Controls />
       </ReactFlow>
     </div>
   );
