@@ -1,5 +1,5 @@
 import React, { useCallback, useRef } from 'react';
-import { ReactFlow, Background, Controls, NodeTypes, EdgeTypes, useReactFlow } from '@xyflow/react';
+import { ReactFlow, Controls, NodeTypes, EdgeTypes, useReactFlow } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEditorStore } from '@/store/editor-store';
 import { SketchyNode } from './node-types';
@@ -56,7 +56,7 @@ export function FlowCanvas() {
     setSelectedEdgeId(null);
   }, [setSelectedNodeId, setSelectedEdgeId]);
   return (
-    <div className="w-full h-full bg-[#fbfbfb] dot-grid" ref={reactFlowWrapper}>
+    <div className="w-full h-full bg-[#fdfdfd]" ref={reactFlowWrapper}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -80,8 +80,7 @@ export function FlowCanvas() {
           data: { weight: 1, label: '' }
         }}
       >
-        <Background color="#eee" gap={20} />
-        <Controls />
+        <Controls showInteractive={false} className="custom-controls" />
       </ReactFlow>
     </div>
   );

@@ -22,9 +22,26 @@
 .wobbly-line {
   stroke-dasharray: 4, 1;
 }
-.dot-grid {
-  background-image: radial-gradient(#e5e7eb 1.5px, transparent 1.5px);
-  background-size: 30px 30px;
+/* React Flow Controls Custom Styling */
+.custom-controls {
+  border: 2px solid #2d2d2d !important;
+  border-radius: 8px !important;
+  background-color: white !important;
+  overflow: hidden;
+  box-shadow: 4px 4px 0px rgba(0,0,0,0.1) !important;
+}
+.custom-controls button {
+  background-color: white !important;
+  border-bottom: 1px solid #eee !important;
+  color: #2d2d2d !important;
+  fill: #2d2d2d !important;
+}
+.custom-controls button:hover {
+  background-color: #f5f5f5 !important;
+}
+.custom-controls svg {
+  stroke: #2d2d2d !important;
+  stroke-width: 2 !important;
 }
 /* Traffic Simulation */
 .packet-glow {

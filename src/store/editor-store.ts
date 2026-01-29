@@ -63,8 +63,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       const futureHops = 1;
       const lDelta = Math.round(((legacyBaselineLatency - futureLatency) / legacyBaselineLatency) * 100);
       const hDelta = legacyBaselineHops / futureHops;
-      set({ 
-        latency: futureLatency, 
+      set({
+        latency: futureLatency,
         hops: futureHops,
         latencyDelta: lDelta,
         hopsDelta: hDelta
@@ -74,8 +74,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const edgeCount = edges.length;
     const totalWeight = edges.reduce((acc, edge) => acc + (Number(edge.data?.weight) || 1), 0);
     const calculatedLatency = Math.min(600, 40 + (totalWeight * 25));
-    set({ 
-      latency: calculatedLatency, 
+    set({
+      latency: calculatedLatency,
       hops: edgeCount,
       latencyDelta: 0,
       hopsDelta: 0
@@ -84,8 +84,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setMode: (mode) => {
     const currentNodes = get().nodes;
     if (mode === 'future') {
-      const originNodes = currentNodes.filter(n => n.data.iconType === 'database' || n.data.iconType === 'server' || n.data.iconType === 'harddrive');
-      const userNodes = currentNodes.filter(n => n.data.iconType === 'users');
+      const originNodes = currentNodes.filter(n => n.data?.iconType === 'database' || n.data?.iconType === 'server' || n.data?.iconType === 'harddrive');
+      const userNodes = currentNodes.filter(n => n.data?.iconType === 'users');
       const cfNode: Node = {
         id: 'cf-edge-auto',
         type: 'sketchy',
@@ -169,9 +169,15 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   fetchProjects: async () => {
     try {
       const response = await api<{ items: Project[] }>('/api/projects');
-      set({ projects: response.items });
+      if (response && response.items) {
+        set({ projects: response.items });
+      } else {
+        console.warn("API returned empty projects list", response);
+        set({ projects: [] });
+      }
     } catch (err) {
-      console.error("Fetch projects failed", err);
+      console.error("Fetch projects failed critically:", err);
+      set({ projects: [] });
     }
   },
   saveProject: async () => {
@@ -186,13 +192,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           nodes,
           edges,
           metadata: { latency, hops, updatedAt: Date.now() }
-        })
+        } as any)
       });
       set({ projectId: result.id, isLoading: false });
-      get().fetchProjects();
+      await get().fetchProjects();
     } catch (err) {
-      console.error("Save failed", err);
+      console.error("Save failed:", err);
       set({ isLoading: false });
+      throw err;
     }
   },
   loadProject: async (id: string) => {
@@ -210,7 +217,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       });
       get().calculateMetrics();
     } catch (err) {
-      console.error("Load failed", err);
+      console.error("Load failed:", err);
       set({ isLoading: false });
     }
   },
@@ -219,7 +226,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       await api(`/api/projects/${id}`, { method: 'DELETE' });
       set({ projects: get().projects.filter(p => p.id !== id) });
     } catch (err) {
-      console.error("Delete failed", err);
+      console.error("Delete failed:", err);
     }
   },
   createNewProject: () => {

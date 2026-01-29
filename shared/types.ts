@@ -1,4 +1,3 @@
-import type { Node, Edge } from '@xyflow/react';
 export interface ApiResponse<T = unknown> {
   success: boolean;
   data?: T;
@@ -27,7 +26,7 @@ export interface ProjectMetadata {
 export interface Project {
   id: string;
   title: string;
-  nodes: Node[];
-  edges: Edge[];
+  nodes: any[];
+  edges: any[];
   metadata: ProjectMetadata;
 }

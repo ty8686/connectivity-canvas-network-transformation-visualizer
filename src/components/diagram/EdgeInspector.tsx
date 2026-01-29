@@ -13,7 +13,6 @@ export function EdgeInspector() {
   const setSelectedEdgeId = useEditorStore(s => s.setSelectedEdgeId);
   const edge = edges.find(e => e.id === selectedId);
   if (!edge) {
-    if (selectedId) console.warn(`Edge with ID ${selectedId} not found in state.`);
     return null;
   }
   const weight = typeof edge.data?.weight === 'number' ? edge.data.weight : 1;
