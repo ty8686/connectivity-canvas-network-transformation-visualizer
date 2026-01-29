@@ -63,8 +63,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (mode === 'future') {
       const futureLatency = 12;
       const futureHops = 1;
-      const lDelta = Math.round(((legacyBaselineLatency - futureLatency) / legacyBaselineLatency) * 100);
-      const hDelta = legacyBaselineHops / futureHops;
+      const lDelta = Math.round(((legacyBaselineLatency - futureLatency) / Math.max(1, legacyBaselineLatency)) * 100);
+      const hDelta = legacyBaselineHops / Math.max(1, futureHops);
       set({
         latency: futureLatency,
         hops: futureHops,
@@ -86,8 +86,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const state = get();
     if (mode === state.mode) return;
     if (mode === 'future') {
-      set({ legacyBackup: { nodes: state.nodes, edges: state.edges } });
-      const originNodes = state.nodes.filter(n => ['database', 'server', 'harddrive'].includes(n.data?.iconType as string));
+      set({ legacyBackup: { nodes: [...state.nodes], edges: [...state.edges] } });
+      const originNodes = state.nodes.filter(n => ['database', 'server', 'harddrive'].includes(String(n.data?.iconType)));
       const userNodes = state.nodes.filter(n => n.data?.iconType === 'users');
       const cfNode: Node = {
         id: 'cf-edge-auto',
@@ -142,12 +142,15 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     get().calculateMetrics();
   },
   onConnect: (connection) => {
-    const edge: Edge = { 
-      ...connection, 
-      id: `e-${Date.now()}`, 
-      type: 'sketchy', 
-      animated: true, 
-      data: { weight: 1, label: '' } 
+    const edge: Edge = {
+      id: `e-${Date.now()}`,
+      source: connection.source,
+      target: connection.target,
+      sourceHandle: connection.sourceHandle,
+      targetHandle: connection.targetHandle,
+      type: 'sketchy',
+      animated: true,
+      data: { weight: 1, label: '' }
     };
     set({ edges: addEdge(edge, get().edges) });
     get().calculateMetrics();
@@ -163,7 +166,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     });
     get().calculateMetrics();
   },
-  addNode: (node) => set({ nodes: [...get().nodes, node] }),
+  addNode: (node) => {
+    set({ nodes: [...get().nodes, node] });
+    get().calculateMetrics();
+  },
   deleteNode: (id) => {
     set({
       nodes: get().nodes.filter(n => n.id !== id),
@@ -220,7 +226,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         edges: project.edges,
         latency: project.metadata.latency,
         hops: project.metadata.hops,
-        mode: project.metadata.hops > 1 ? 'legacy' : 'future',
+        mode: project.metadata.hops > 2 ? 'legacy' : 'future',
         isLoading: false,
         legacyBackup: null
       });

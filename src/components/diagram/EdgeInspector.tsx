@@ -1,27 +1,28 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useEditorStore } from '@/store/editor-store';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
+import { useShallow } from 'zustand/react/shallow';
 import { Trash2, X, Zap } from 'lucide-react';
 export function EdgeInspector() {
   const selectedId = useEditorStore(s => s.selectedEdgeId);
-  const edges = useEditorStore(s => s.edges);
+  const edges = useEditorStore(useShallow(s => s.edges));
   const updateEdgeData = useEditorStore(s => s.updateEdgeData);
   const deleteEdge = useEditorStore(s => s.deleteEdge);
   const setSelectedEdgeId = useEditorStore(s => s.setSelectedEdgeId);
-  const edge = edges.find(e => e.id === selectedId);
+  const edge = useMemo(() => edges.find(e => e.id === selectedId), [edges, selectedId]);
   if (!edge) {
     return null;
   }
   const weight = typeof edge.data?.weight === 'number' ? edge.data.weight : 1;
-  const edgeLabel = (edge.data?.label as string) || "";
+  const edgeLabel = String(edge.data?.label || "");
   return (
     <div className="absolute top-24 right-8 z-20 w-80 bg-white border border-border p-6 shadow-2xl rounded-xl animate-in fade-in slide-in-from-right-6 duration-300">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="text-lg font-bold tracking-tight">Edge Link</h3>
+          <h3 className="text-lg font-bold tracking-tight text-foreground">Edge Link</h3>
           <p className="text-[10px] text-muted-foreground font-mono uppercase">ID: {edge.id.slice(0, 8)}</p>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setSelectedEdgeId(null)} className="h-8 w-8 rounded-full hover:bg-secondary">
@@ -35,7 +36,7 @@ export function EdgeInspector() {
             id="edge-label"
             value={edgeLabel}
             onChange={(e) => updateEdgeData(edge.id, { label: e.target.value })}
-            className="rounded-md border-border h-10 focus-visible:ring-[#F38020] transition-shadow"
+            className="rounded-md border-border h-10 focus-visible:ring-[#F38020] transition-shadow bg-secondary/30"
             placeholder="e.g. MPLS, VPN, Fiber"
           />
         </div>
