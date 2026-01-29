@@ -77,7 +77,10 @@ function updateWranglerJsonc() {
 }
 
 function runSetupCommands() {
-    const commands = [];
+    const commands = [
+    "bun add @xyflow/react@^12.0.0",
+    "bun add dagre@^0.8.5"
+];
     
     if (commands.length === 0) {
         console.log('⊘ No setup commands to run');
