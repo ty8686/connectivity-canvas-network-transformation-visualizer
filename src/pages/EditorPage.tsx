@@ -1,11 +1,11 @@
 import React, { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Zap, Layers, Save, Play, FastForward, Rewind, ChevronRight, Home } from 'lucide-react';
+import { ChevronRight, Home, Save, Rewind, Play, FastForward, Zap, ShieldAlert, Globe } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FlowCanvas } from '@/components/diagram/FlowCanvas';
 import { ComponentToolbox } from '@/components/diagram/ComponentToolbox';
 import { NodeInspector } from '@/components/diagram/NodeInspector';
+import { EdgeInspector } from '@/components/diagram/EdgeInspector';
 import { TransformationInsights } from '@/components/diagram/TransformationInsights';
 import { useEditorStore } from '@/store/editor-store';
 import { ReactFlowProvider } from '@xyflow/react';
@@ -25,6 +25,9 @@ export default function EditorPage() {
   const loadProject = useEditorStore(s => s.loadProject);
   const isLoading = useEditorStore(s => s.isLoading);
   const selectedNodeId = useEditorStore(s => s.selectedNodeId);
+  const selectedEdgeId = useEditorStore(s => s.selectedEdgeId);
+  const latency = useEditorStore(s => s.latency);
+  const hops = useEditorStore(s => s.hops);
   useEffect(() => {
     if (projectIdParam) {
       loadProject(projectIdParam);
@@ -55,20 +58,29 @@ export default function EditorPage() {
             />
           </div>
         </div>
-        <Tabs
-          value={mode}
-          onValueChange={(val) => setMode(val as 'legacy' | 'future')}
-          className="w-[320px]"
-        >
-          <TabsList className="grid w-full grid-cols-2 rounded-lg h-10 p-1">
-            <TabsTrigger value="legacy" className="flex items-center gap-2 text-xs font-bold">
-              Legacy
-            </TabsTrigger>
-            <TabsTrigger value="future" className="flex items-center gap-2 text-xs font-bold data-[state=active]:text-[#F38020]">
-              <Zap className="w-3 h-3" /> Cloudflare
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        {/* Custom Hardware-Style Mode Switcher */}
+        <div className="flex items-center bg-gray-100 p-1 rounded-full border border-border w-[280px] relative shadow-inner">
+          <button
+            onClick={() => setMode('legacy')}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-1.5 px-4 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 z-10",
+              mode === 'legacy' ? "bg-white text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            Legacy
+          </button>
+          <button
+            onClick={() => setMode('future')}
+            className={cn(
+              "flex-1 flex items-center justify-center gap-2 py-1.5 px-4 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 z-10",
+              mode === 'future' 
+                ? "bg-[#F38020] text-white shadow-[0_0_15px_rgba(243,128,32,0.4)]" 
+                : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <Zap className={cn("w-3 h-3", mode === 'future' ? "fill-current" : "")} /> Cloudflare
+          </button>
+        </div>
         <div className="flex items-center gap-4 flex-1 justify-end">
           <div className="hidden lg:flex items-center bg-secondary/50 rounded-md p-1 gap-1">
              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSimulationSpeed(0.5)}>
@@ -95,33 +107,38 @@ export default function EditorPage() {
         <ReactFlowProvider>
           <ComponentToolbox />
           {selectedNodeId && <NodeInspector />}
+          {selectedEdgeId && <EdgeInspector />}
           <div className="absolute inset-0 z-10">
             <FlowCanvas />
           </div>
         </ReactFlowProvider>
-        {/* Real-time stats HUD */}
-        <div className="absolute bottom-8 right-8 w-60 p-5 rounded-xl border border-border z-20 bg-white/95 shadow-xl pointer-events-none md:pointer-events-auto">
-          <div className="flex items-center gap-2 mb-4">
-            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Live Edge Telemetry</span>
+        {/* Real-time Telemetry HUD */}
+        <div className="absolute bottom-8 right-8 w-72 p-6 rounded-2xl border border-border z-20 bg-white/95 shadow-2xl pointer-events-none md:pointer-events-auto backdrop-blur-md">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-2">
+              <div className={cn("w-2 h-2 rounded-full animate-pulse", mode === 'legacy' ? "bg-red-500" : "bg-green-500")} />
+              <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Network Telemetry</span>
+            </div>
+            {mode === 'future' ? <Globe className="w-4 h-4 text-[#F38020]" /> : <ShieldAlert className="w-4 h-4 text-red-500" />}
           </div>
-          <div className="space-y-4">
+          <div className="space-y-6">
             <div>
-              <div className="flex justify-between items-center mb-1.5">
-                <span className="text-xs font-semibold">Latency (ms)</span>
-                <span className={cn("text-lg font-black tracking-tighter", mode === 'legacy' ? "text-red-500" : "text-green-600")}>
-                  {mode === 'legacy' ? '240' : '12'}
+              <div className="flex justify-between items-end mb-1.5">
+                <span className="text-xs font-bold uppercase tracking-tighter opacity-70 text-foreground">Global Latency</span>
+                <span className={cn("text-2xl font-black tracking-tighter transition-colors duration-500", mode === 'legacy' ? "text-red-500" : "text-green-600")}>
+                  {Math.round(latency)}<span className="text-xs font-medium ml-0.5">ms</span>
                 </span>
               </div>
-              <div className="w-full bg-secondary h-1.5 rounded-full overflow-hidden">
+              <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
                  <div
-                   className={cn("h-full transition-all duration-1000", mode === 'legacy' ? "bg-red-500 w-[85%]" : "bg-green-500 w-[5%]")}
+                   className={cn("h-full transition-all duration-1000 ease-out", mode === 'legacy' ? "bg-red-500" : "bg-green-500")}
+                   style={{ width: `${Math.min(100, (latency / 600) * 100)}%` }}
                  />
               </div>
             </div>
-            <div className="flex justify-between items-center pt-2 border-t border-border">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase">Hops</span>
-              <span className="text-xs font-black">{mode === 'legacy' ? '12 Hops' : '1 (Direct)'}</span>
+            <div className="flex justify-between items-center pt-4 border-t border-border">
+              <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Topology Hops</span>
+              <span className="text-sm font-black text-foreground">{hops} {hops === 1 ? 'Hop' : 'Hops'}</span>
             </div>
           </div>
         </div>

@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { Node, Edge, applyNodeChanges, applyEdgeChanges, addEdge, NodeChange, EdgeChange, Connection } from '@xyflow/react';
 import { DEMO_LEGACY_GRAPH } from '@/lib/demo-data';
 import { api } from '@/lib/api-client';
-import type { Project, ProjectMetadata } from '@shared/types';
+import type { Project } from '@shared/types';
 export type ViewMode = 'legacy' | 'future';
 interface EditorState {
   projectId: string | null;
@@ -12,24 +12,31 @@ interface EditorState {
   edges: Edge[];
   projects: Project[];
   selectedNodeId: string | null;
+  selectedEdgeId: string | null;
   simulationSpeed: number;
   isLoading: boolean;
-  comparisonStats: { latencyDelta: number; hopsDelta: number };
+  // Dynamic metrics
+  latency: number;
+  hops: number;
   setMode: (mode: ViewMode) => void;
   setProjectTitle: (title: string) => void;
   setSimulationSpeed: (speed: number) => void;
   setSelectedNodeId: (id: string | null) => void;
+  setSelectedEdgeId: (id: string | null) => void;
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
   updateNodeData: (id: string, data: any) => void;
+  updateEdgeData: (id: string, data: any) => void;
   addNode: (node: Node) => void;
   deleteNode: (id: string) => void;
+  deleteEdge: (id: string) => void;
   fetchProjects: () => Promise<void>;
   saveProject: () => Promise<void>;
   loadProject: (id: string) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   createNewProject: () => void;
+  calculateMetrics: () => void;
 }
 export const useEditorStore = create<EditorState>((set, get) => ({
   projectId: null,
@@ -39,9 +46,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   edges: DEMO_LEGACY_GRAPH.edges,
   projects: [],
   selectedNodeId: null,
+  selectedEdgeId: null,
   simulationSpeed: 1.0,
   isLoading: false,
-  comparisonStats: { latencyDelta: 95, hopsDelta: 7 },
+  latency: 240,
+  hops: 8,
+  calculateMetrics: () => {
+    const { nodes, edges, mode } = get();
+    if (mode === 'future') {
+      set({ latency: 12, hops: 1 });
+      return;
+    }
+    // Legacy calculation: base latency + edge weights
+    const edgeCount = edges.length;
+    const totalWeight = edges.reduce((acc, edge) => acc + (Number(edge.data?.weight) || 1), 0);
+    const calculatedLatency = Math.min(600, 40 + (totalWeight * 25));
+    set({ latency: calculatedLatency, hops: edgeCount });
+  },
   setMode: (mode) => {
     const currentNodes = get().nodes;
     if (mode === 'future') {
@@ -62,6 +83,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           target: cfNode.id,
           type: 'sketchy',
           animated: true,
+          data: { weight: 1 },
           style: { stroke: '#F48120', strokeWidth: 3 }
         });
       });
@@ -72,37 +94,60 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           target: o.id,
           type: 'sketchy',
           animated: true,
+          data: { weight: 1 },
           style: { stroke: '#F48120', strokeWidth: 3 }
         });
       });
-      set({ mode, nodes: newNodes, edges: newEdges, comparisonStats: { latencyDelta: 95, hopsDelta: 7 } });
+      set({ mode, nodes: newNodes, edges: newEdges });
     } else {
       set({ mode, nodes: DEMO_LEGACY_GRAPH.nodes, edges: DEMO_LEGACY_GRAPH.edges });
     }
+    get().calculateMetrics();
   },
   setProjectTitle: (projectTitle) => set({ projectTitle }),
   setSimulationSpeed: (simulationSpeed) => set({ simulationSpeed }),
-  setSelectedNodeId: (selectedNodeId) => set({ selectedNodeId }),
+  setSelectedNodeId: (id) => set({ selectedNodeId: id, selectedEdgeId: null }),
+  setSelectedEdgeId: (id) => set({ selectedEdgeId: id, selectedNodeId: null }),
   onNodesChange: (changes) => {
     set({ nodes: applyNodeChanges(changes, get().nodes) });
+    get().calculateMetrics();
   },
   onEdgesChange: (changes) => {
     set({ edges: applyEdgeChanges(changes, get().edges) });
+    get().calculateMetrics();
   },
   onConnect: (connection) => {
-    set({ edges: addEdge({ ...connection, type: 'sketchy', animated: true }, get().edges) });
+    const edge = { ...connection, type: 'sketchy', animated: true, data: { weight: 1, label: '' } };
+    set({ edges: addEdge(edge, get().edges) });
+    get().calculateMetrics();
   },
   updateNodeData: (id, data) => {
     set({
       nodes: get().nodes.map(n => n.id === id ? { ...n, data: { ...n.data, ...data } } : n)
     });
   },
+  updateEdgeData: (id, data) => {
+    set({
+      edges: get().edges.map(e => e.id === id ? { ...e, data: { ...e.data, ...data } } : e)
+    });
+    get().calculateMetrics();
+  },
   addNode: (node) => set({ nodes: [...get().nodes, node] }),
-  deleteNode: (id) => set({ 
-    nodes: get().nodes.filter(n => n.id !== id),
-    edges: get().edges.filter(e => e.source !== id && e.target !== id),
-    selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId
-  }),
+  deleteNode: (id) => {
+    set({
+      nodes: get().nodes.filter(n => n.id !== id),
+      edges: get().edges.filter(e => e.source !== id && e.target !== id),
+      selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId
+    });
+    get().calculateMetrics();
+  },
+  deleteEdge: (id) => {
+    set({
+      edges: get().edges.filter(e => e.id !== id),
+      selectedEdgeId: get().selectedEdgeId === id ? null : get().selectedEdgeId
+    });
+    get().calculateMetrics();
+  },
   fetchProjects: async () => {
     try {
       const response = await api<{ items: Project[] }>('/api/projects');
@@ -112,7 +157,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     }
   },
   saveProject: async () => {
-    const { projectId, projectTitle, nodes, edges, mode } = get();
+    const { projectId, projectTitle, nodes, edges, latency, hops } = get();
     set({ isLoading: true });
     try {
       const result = await api<Project>('/api/projects', {
@@ -122,11 +167,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           title: projectTitle,
           nodes,
           edges,
-          metadata: { 
-            latency: mode === 'legacy' ? 240 : 12, 
-            hops: mode === 'legacy' ? 8 : 1,
-            updatedAt: Date.now()
-          }
+          metadata: { latency, hops, updatedAt: Date.now() }
         })
       });
       set({ projectId: result.id, isLoading: false });
@@ -144,6 +185,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         projectTitle: project.title,
         nodes: project.nodes,
         edges: project.edges,
+        latency: project.metadata.latency,
+        hops: project.metadata.hops,
         mode: project.metadata.hops > 1 ? 'legacy' : 'future',
         isLoading: false
       });
@@ -167,7 +210,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       mode: 'legacy',
       nodes: DEMO_LEGACY_GRAPH.nodes,
       edges: DEMO_LEGACY_GRAPH.edges,
-      selectedNodeId: null
+      selectedNodeId: null,
+      selectedEdgeId: null,
+      latency: 240,
+      hops: 8
     });
   }
 }));

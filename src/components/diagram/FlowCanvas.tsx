@@ -18,6 +18,7 @@ export function FlowCanvas() {
   const onConnect = useEditorStore(s => s.onConnect);
   const addNode = useEditorStore(s => s.addNode);
   const setSelectedNodeId = useEditorStore(s => s.setSelectedNodeId);
+  const setSelectedEdgeId = useEditorStore(s => s.setSelectedEdgeId);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
   const onDragOver = useCallback((event: React.DragEvent) => {
@@ -47,9 +48,13 @@ export function FlowCanvas() {
   const onNodeClick = useCallback((_: React.MouseEvent, node: any) => {
     setSelectedNodeId(node.id);
   }, [setSelectedNodeId]);
+  const onEdgeClick = useCallback((_: React.MouseEvent, edge: any) => {
+    setSelectedEdgeId(edge.id);
+  }, [setSelectedEdgeId]);
   const onPaneClick = useCallback(() => {
     setSelectedNodeId(null);
-  }, [setSelectedNodeId]);
+    setSelectedEdgeId(null);
+  }, [setSelectedNodeId, setSelectedEdgeId]);
   return (
     <div className="w-full h-full bg-[#fbfbfb] dot-grid" ref={reactFlowWrapper}>
       <ReactFlow
@@ -61,6 +66,7 @@ export function FlowCanvas() {
         onDrop={onDrop}
         onDragOver={onDragOver}
         onNodeClick={onNodeClick}
+        onEdgeClick={onEdgeClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
@@ -68,6 +74,11 @@ export function FlowCanvas() {
         snapToGrid
         snapGrid={[20, 20]}
         deleteKeyCode={['Backspace', 'Delete']}
+        defaultEdgeOptions={{
+          type: 'sketchy',
+          animated: true,
+          data: { weight: 1, label: '' }
+        }}
       >
         <Background color="#eee" gap={20} />
         <Controls />
