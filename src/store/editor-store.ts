@@ -10,6 +10,7 @@ interface EditorState {
   mode: ViewMode;
   nodes: Node[];
   edges: Edge[];
+  legacyBackup: { nodes: Node[]; edges: Edge[] } | null;
   projects: Project[];
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
@@ -45,6 +46,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   mode: 'legacy',
   nodes: DEMO_LEGACY_GRAPH.nodes,
   edges: DEMO_LEGACY_GRAPH.edges,
+  legacyBackup: null,
   projects: [],
   selectedNodeId: null,
   selectedEdgeId: null,
@@ -71,21 +73,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       });
       return;
     }
-    const edgeCount = edges.length;
     const totalWeight = edges.reduce((acc, edge) => acc + (Number(edge.data?.weight) || 1), 0);
     const calculatedLatency = Math.min(600, 40 + (totalWeight * 25));
     set({
       latency: calculatedLatency,
-      hops: edgeCount,
+      hops: edges.length,
       latencyDelta: 0,
       hopsDelta: 0
     });
   },
   setMode: (mode) => {
-    const currentNodes = get().nodes;
+    const state = get();
+    if (mode === state.mode) return;
     if (mode === 'future') {
-      const originNodes = currentNodes.filter(n => n.data?.iconType === 'database' || n.data?.iconType === 'server' || n.data?.iconType === 'harddrive');
-      const userNodes = currentNodes.filter(n => n.data?.iconType === 'users');
+      // Backup current legacy state before transformation
+      set({ legacyBackup: { nodes: state.nodes, edges: state.edges } });
+      const originNodes = state.nodes.filter(n => ['database', 'server', 'harddrive'].includes(n.data?.iconType as string));
+      const userNodes = state.nodes.filter(n => n.data?.iconType === 'users');
       const cfNode: Node = {
         id: 'cf-edge-auto',
         type: 'sketchy',
@@ -118,7 +122,12 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       });
       set({ mode, nodes: newNodes, edges: newEdges });
     } else {
-      set({ mode, nodes: DEMO_LEGACY_GRAPH.nodes, edges: DEMO_LEGACY_GRAPH.edges });
+      // Restore from backup if exists, else default demo
+      if (state.legacyBackup) {
+        set({ mode, nodes: state.legacyBackup.nodes, edges: state.legacyBackup.edges });
+      } else {
+        set({ mode, nodes: DEMO_LEGACY_GRAPH.nodes, edges: DEMO_LEGACY_GRAPH.edges });
+      }
     }
     get().calculateMetrics();
   },
@@ -136,7 +145,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   },
   onConnect: (connection) => {
     const edge = { ...connection, id: `e-${Date.now()}`, type: 'sketchy', animated: true, data: { weight: 1, label: '' } };
-    set({ edges: addEdge(edge, get().edges) });
+    set({ edges: addEdge(edge, get().edges) as Edge[] });
     get().calculateMetrics();
   },
   updateNodeData: (id, data) => {
@@ -172,11 +181,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       if (response && response.items) {
         set({ projects: response.items });
       } else {
-        console.warn("API returned empty projects list", response);
         set({ projects: [] });
       }
     } catch (err) {
-      console.error("Fetch projects failed critically:", err);
+      console.error("Fetch projects failed:", err);
       set({ projects: [] });
     }
   },
@@ -192,7 +200,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           nodes,
           edges,
           metadata: { latency, hops, updatedAt: Date.now() }
-        } as any)
+        })
       });
       set({ projectId: result.id, isLoading: false });
       await get().fetchProjects();
@@ -213,7 +221,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         latency: project.metadata.latency,
         hops: project.metadata.hops,
         mode: project.metadata.hops > 1 ? 'legacy' : 'future',
-        isLoading: false
+        isLoading: false,
+        legacyBackup: null // Reset backup on load
       });
       get().calculateMetrics();
     } catch (err) {
@@ -236,6 +245,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       mode: 'legacy',
       nodes: DEMO_LEGACY_GRAPH.nodes,
       edges: DEMO_LEGACY_GRAPH.edges,
+      legacyBackup: null,
       selectedNodeId: null,
       selectedEdgeId: null,
       latency: 240,

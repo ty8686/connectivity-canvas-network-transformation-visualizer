@@ -1,13 +1,14 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Clock, Network, ArrowRight, MoreVertical } from 'lucide-react';
+import { Plus, Trash2, Clock, Network, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useEditorStore } from '@/store/editor-store';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
+import { useShallow } from 'zustand/react/shallow';
 export default function DashboardPage() {
-  const projects = useEditorStore(s => s.projects);
+  const projects = useEditorStore(useShallow(s => s.projects));
   const fetchProjects = useEditorStore(s => s.fetchProjects);
   const deleteProject = useEditorStore(s => s.deleteProject);
   const createNewProject = useEditorStore(s => s.createNewProject);
