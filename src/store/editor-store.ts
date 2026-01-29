@@ -7,6 +7,8 @@ export type ViewMode = 'legacy' | 'future';
 interface PreviewMetrics {
   latency: number;
   hops: number;
+  nodeIds: string[];
+  edgeIds: string[];
 }
 interface EditorState {
   projectId: string | null;
@@ -19,6 +21,8 @@ interface EditorState {
   selectedNodeId: string | null;
   selectedEdgeId: string | null;
   hoveredNodeId: string | null;
+  hoveredPathNodeIds: string[];
+  hoveredPathEdgeIds: string[];
   simulationSpeed: number;
   isLoading: boolean;
   latency: number;
@@ -47,16 +51,15 @@ interface EditorState {
   createNewProject: () => void;
   calculateMetrics: () => void;
 }
-// Simple Dijkstra Implementation
-function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, targetIconTypes: string[]) {
-  const adjacency: Record<string, { to: string; weight: number }[]> = {};
+function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, targetIconTypes: string[]): PreviewMetrics | null {
+  const adjacency: Record<string, { to: string; weight: number; edgeId: string }[]> = {};
   edges.forEach(edge => {
     if (!adjacency[edge.source]) adjacency[edge.source] = [];
     const weight = Number(edge.data?.weight) || 1;
-    adjacency[edge.source].push({ to: edge.target, weight });
+    adjacency[edge.source].push({ to: edge.target, weight, edgeId: edge.id });
   });
   const distances: Record<string, number> = { [startNodeId]: 0 };
-  const hopsCount: Record<string, number> = { [startNodeId]: 0 };
+  const previous: Record<string, { nodeId: string; edgeId: string } | null> = { [startNodeId]: null };
   const visited = new Set<string>();
   const pq: [string, number][] = [[startNodeId, 0]];
   while (pq.length > 0) {
@@ -66,13 +69,31 @@ function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, tar
     visited.add(u);
     const node = nodes.find(n => n.id === u);
     if (node && targetIconTypes.includes(String(node.data?.iconType)) && u !== startNodeId) {
-      return { latency: d * 15 + 10, hops: hopsCount[u] };
+      const nodePath: string[] = [];
+      const edgePath: string[] = [];
+      let curr: string | null = u;
+      while (curr) {
+        nodePath.unshift(curr);
+        const prevData = previous[curr];
+        if (prevData) {
+          edgePath.unshift(prevData.edgeId);
+          curr = prevData.nodeId;
+        } else {
+          curr = null;
+        }
+      }
+      return { 
+        latency: d * 15 + 10, 
+        hops: nodePath.length - 1,
+        nodeIds: nodePath,
+        edgeIds: edgePath
+      };
     }
-    (adjacency[u] || []).forEach(({ to, weight }) => {
+    (adjacency[u] || []).forEach(({ to, weight, edgeId }) => {
       const newDist = d + weight;
-      if (!distances[to] || newDist < distances[to]) {
+      if (distances[to] === undefined || newDist < distances[to]) {
         distances[to] = newDist;
-        hopsCount[to] = (hopsCount[u] || 0) + 1;
+        previous[to] = { nodeId: u, edgeId };
         pq.push([to, newDist]);
       }
     });
@@ -90,6 +111,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   selectedNodeId: null,
   selectedEdgeId: null,
   hoveredNodeId: null,
+  hoveredPathNodeIds: [],
+  hoveredPathEdgeIds: [],
   simulationSpeed: 1.0,
   isLoading: false,
   latency: 240,
@@ -101,20 +124,37 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const { nodes, edges, mode, hoveredNodeId } = get();
     const targetIcons = ['database', 'server', 'harddrive'];
     const userNodes = nodes.filter(n => n.data?.iconType === 'users');
-    // Calculate paths for all user nodes to get global average
-    const paths = userNodes.map(u => findShortestPath(nodes, edges, u.id, targetIcons)).filter(Boolean) as PreviewMetrics[];
-    const avgLatency = paths.length > 0 
-      ? paths.reduce((acc, p) => acc + p.latency, 0) / paths.length 
+    const paths = userNodes
+      .map(u => findShortestPath(nodes, edges, u.id, targetIcons))
+      .filter(Boolean) as PreviewMetrics[];
+    const avgLatency = paths.length > 0
+      ? paths.reduce((acc, p) => acc + p.latency, 0) / paths.length
       : (mode === 'future' ? 12 : 240);
-    const avgHops = paths.length > 0 
-      ? paths.reduce((acc, p) => acc + p.hops, 0) / paths.length 
+    const avgHops = paths.length > 0
+      ? paths.reduce((acc, p) => acc + p.hops, 0) / paths.length
       : (mode === 'future' ? 1 : 8);
-    // Calculate specific preview if hovered
     let preview: PreviewMetrics | null = null;
+    let pathNodeIds: string[] = [];
+    let pathEdgeIds: string[] = [];
     if (hoveredNodeId) {
-      const isUser = nodes.find(n => n.id === hoveredNodeId)?.data?.iconType === 'users';
-      if (isUser) {
+      const node = nodes.find(n => n.id === hoveredNodeId);
+      if (node?.data?.iconType === 'users') {
         preview = findShortestPath(nodes, edges, hoveredNodeId, targetIcons);
+        if (preview) {
+          pathNodeIds = preview.nodeIds;
+          pathEdgeIds = preview.edgeIds;
+        }
+      } else if (node && targetIcons.includes(String(node.data?.iconType))) {
+        // Find if any user can reach this specific target
+        for (const u of userNodes) {
+          const p = findShortestPath(nodes, edges, u.id, [String(node.data?.iconType)]);
+          if (p && p.nodeIds.includes(node.id)) {
+             pathNodeIds = p.nodeIds;
+             pathEdgeIds = p.edgeIds;
+             preview = p;
+             break;
+          }
+        }
       }
     }
     const legacyBaselineLatency = 240;
@@ -125,7 +165,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       hops: Math.round(avgHops),
       latencyDelta: lDelta,
       hopsDelta: hDelta,
-      previewMetrics: preview
+      previewMetrics: preview,
+      hoveredPathNodeIds: pathNodeIds,
+      hoveredPathEdgeIds: pathEdgeIds
     });
   },
   setHoveredNodeId: (id) => {
@@ -307,7 +349,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       latency: 240,
       hops: 8,
       latencyDelta: 0,
-      hopsDelta: 0
+      hopsDelta: 0,
+      hoveredPathNodeIds: [],
+      hoveredPathEdgeIds: []
     });
   }
 }));
