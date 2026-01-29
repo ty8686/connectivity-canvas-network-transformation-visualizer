@@ -12,7 +12,6 @@ export const SketchyEdge = ({
   targetPosition,
   style = {},
   markerEnd,
-  data
 }: EdgeProps) => {
   const [edgePath] = getBezierPath({
     sourceX,
@@ -24,10 +23,9 @@ export const SketchyEdge = ({
   });
   const mode = useEditorStore(s => s.mode);
   const simulationSpeed = useEditorStore(s => s.simulationSpeed);
-  // Speed logic: legacy is slow, future is fast. Adjusted by global speed multiplier.
   const duration = useMemo(() => {
-    const base = mode === 'legacy' ? 4 : 0.8;
-    return base / simulationSpeed;
+    const base = mode === 'legacy' ? 5 : 0.8;
+    return base / Math.max(0.1, simulationSpeed);
   }, [mode, simulationSpeed]);
   return (
     <>
@@ -36,14 +34,15 @@ export const SketchyEdge = ({
         markerEnd={markerEnd}
         style={{
           ...style,
-          strokeWidth: 2,
-          stroke: style.stroke || '#2D2D2D',
+          strokeWidth: mode === 'future' ? 3 : 2,
+          stroke: mode === 'future' ? '#F38020' : '#2D2D2D',
+          opacity: mode === 'future' ? 1 : 0.6,
         }}
         className="wobbly-line"
       />
       <motion.circle
-        r="4"
-        fill={mode === 'future' ? '#F48120' : '#2D2D2D'}
+        r={mode === 'future' ? "4" : "3"}
+        fill={mode === 'future' ? '#F38020' : '#2D2D2D'}
         className="packet-glow"
         initial={{ offsetDistance: "0%" }}
         animate={{ offsetDistance: "100%" }}

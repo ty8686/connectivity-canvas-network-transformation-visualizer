@@ -1,7 +1,8 @@
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Trash2, Clock, Network, ArrowRight, ExternalLink } from 'lucide-react';
+import { Plus, Trash2, Clock, Network, ArrowRight, MoreVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { useEditorStore } from '@/store/editor-store';
 import { formatDistanceToNow } from 'date-fns';
 import { toast } from 'sonner';
@@ -21,73 +22,73 @@ export default function DashboardPage() {
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.preventDefault();
     e.stopPropagation();
-    if (confirm('Are you sure you want to delete this project?')) {
+    if (confirm('Permanently delete this project?')) {
       await deleteProject(id);
-      toast.success('Project deleted');
+      toast.success('Project removed');
     }
   };
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div className="py-8 md:py-10 lg:py-12">
-        <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-10">
+      <div className="py-12 md:py-16">
+        <header className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
           <div>
-            <h1 className="text-4xl font-illustrative text-foreground">My Canvases</h1>
-            <p className="text-muted-foreground mt-1">Manage and transform your network architectures.</p>
+            <h1 className="text-4xl font-extrabold tracking-tight text-foreground">Canvas Console</h1>
+            <p className="text-muted-foreground mt-2 text-lg">Manage your connectivity transformation roadmaps.</p>
           </div>
-          <Button 
+          <Button
             onClick={handleCreateNew}
-            className="bg-[#F48120] hover:bg-[#D14615] text-white gap-2 sketchy-border border-none px-6 h-12"
+            className="bg-[#F38020] hover:bg-[#D14615] text-white gap-2 px-8 h-12 rounded-md shadow-lg"
           >
             <Plus className="w-5 h-5" /> New Visualization
           </Button>
         </header>
         {projects.length === 0 ? (
-          <div className="py-20 flex flex-col items-center justify-center sketchy-card bg-gray-50/50 border-dashed">
-            <Network className="w-16 h-16 text-muted-foreground/30 mb-4" strokeWidth={1} />
-            <h2 className="text-xl font-medium text-muted-foreground">No projects found</h2>
-            <p className="text-sm text-muted-foreground mb-6">Start by creating your first network diagram.</p>
-            <Button variant="outline" onClick={handleCreateNew} className="sketchy-border">
-              Create First Project
+          <div className="py-24 flex flex-col items-center justify-center bg-secondary/20 rounded-xl border-2 border-dashed border-border">
+            <Network className="w-16 h-16 text-muted-foreground/20 mb-6" strokeWidth={1.5} />
+            <h2 className="text-2xl font-bold text-foreground">No Projects Yet</h2>
+            <p className="text-muted-foreground mb-8 max-w-sm text-center">Your architecture visualizations will appear here once you create them.</p>
+            <Button variant="default" onClick={handleCreateNew} className="rounded-md bg-foreground text-background">
+              Build Your First Canvas
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             {projects.map((project) => (
-              <Link 
-                key={project.id} 
+              <Link
+                key={project.id}
                 to={`/editor?id=${project.id}`}
-                className="group relative sketchy-card p-6 bg-white hover:border-[#F48120] transition-all flex flex-col"
+                className="block group"
               >
-                <div className="flex justify-between items-start mb-4">
-                  <div className="p-3 bg-orange-50 rounded-lg group-hover:bg-orange-100 transition-colors">
-                    <Network className="w-6 h-6 text-[#F48120]" />
-                  </div>
-                  <Button 
-                    variant="ghost" 
-                    size="icon" 
-                    className="text-muted-foreground hover:text-destructive transition-colors"
-                    onClick={(e) => handleDelete(e, project.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-                <h3 className="text-xl font-illustrative mb-2 group-hover:text-[#F48120] transition-colors line-clamp-1">
-                  {project.title}
-                </h3>
-                <div className="mt-auto space-y-3">
-                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="w-3.5 h-3.5" />
-                    Updated {formatDistanceToNow(project.metadata?.updatedAt || Date.now())} ago
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-t border-gray-100 mt-2">
-                    <span className="text-2xs font-bold uppercase tracking-wider text-muted-foreground">
-                      {project.nodes.length} Components
+                <Card className="h-full border border-border hover:border-[#F38020] transition-all hover:shadow-xl rounded-xl overflow-hidden flex flex-col">
+                  <CardHeader className="flex flex-row items-center justify-between pb-4">
+                    <div className="w-10 h-10 rounded-lg bg-orange-50 flex items-center justify-center text-[#F38020] group-hover:bg-[#F38020] group-hover:text-white transition-colors">
+                      <Network size={20} />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors rounded-full"
+                      onClick={(e) => handleDelete(e, project.id)}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="flex-1">
+                    <CardTitle className="text-xl font-bold mb-2 group-hover:text-[#F38020] transition-colors">
+                      {project.title}
+                    </CardTitle>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="w-3.5 h-3.5" />
+                      Updated {formatDistanceToNow(project.metadata?.updatedAt || Date.now())} ago
+                    </div>
+                  </CardContent>
+                  <CardFooter className="pt-4 border-t border-border bg-secondary/10 flex justify-between items-center text-xs font-bold uppercase tracking-wider">
+                    <span className="text-muted-foreground">{project.nodes.length} Components</span>
+                    <span className="text-[#F38020] flex items-center gap-1">
+                      Open Editor <ArrowRight className="w-3.5 h-3.5" />
                     </span>
-                    <span className="text-2xs font-bold uppercase tracking-wider text-[#F48120] flex items-center gap-1">
-                      Open Editor <ArrowRight className="w-3 h-3" />
-                    </span>
-                  </div>
-                </div>
+                  </CardFooter>
+                </Card>
               </Link>
             ))}
           </div>

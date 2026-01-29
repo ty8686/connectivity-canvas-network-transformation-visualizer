@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, Zap, Layers, Save, Play, FastForward, Rewind, Info } from 'lucide-react';
+import { ArrowLeft, Zap, Layers, Save, Play, FastForward, Rewind, ChevronRight, Home } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { FlowCanvas } from '@/components/diagram/FlowCanvas';
@@ -33,63 +33,61 @@ export default function EditorPage() {
   const handleSave = async () => {
     try {
       await saveProject();
-      toast.success("Project saved successfully!");
+      toast.success("Design saved successfully");
     } catch (err) {
-      toast.error("Failed to save project.");
+      toast.error("Failed to save work");
     }
   };
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden font-sans">
-      <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-white z-30">
-        <div className="flex items-center gap-4 flex-1">
-          <Link to="/dashboard">
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="w-5 h-5" />
-            </Button>
-          </Link>
-          <div className="flex flex-col">
-            <input 
+      <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-white z-30 shadow-sm">
+        <div className="flex items-center gap-6 flex-1">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Link to="/dashboard" className="hover:text-foreground transition-colors">
+              <Home className="w-4 h-4" />
+            </Link>
+            <ChevronRight className="w-3 h-3 opacity-30" />
+            <input
               value={projectTitle}
               onChange={(e) => setProjectTitle(e.target.value)}
-              className="font-illustrative text-xl leading-none bg-transparent border-none focus:ring-0 p-0 hover:bg-gray-50 rounded px-1 transition-colors w-64"
-              placeholder="Project Name..."
+              className="font-bold text-sm tracking-tight text-foreground bg-transparent border-none focus:ring-0 p-0 hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors w-48"
+              placeholder="Unnamed Canvas..."
             />
-            <span className="text-2xs text-muted-foreground uppercase tracking-widest font-bold">Network Visualizer</span>
           </div>
         </div>
         <Tabs
           value={mode}
           onValueChange={(val) => setMode(val as 'legacy' | 'future')}
-          className="w-[320px] md:w-[400px]"
+          className="w-[320px]"
         >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="legacy" className="flex items-center gap-2">
-              <Layers className="w-4 h-4" /> Legacy
+          <TabsList className="grid w-full grid-cols-2 rounded-lg h-10 p-1">
+            <TabsTrigger value="legacy" className="flex items-center gap-2 text-xs font-bold">
+              Legacy
             </TabsTrigger>
-            <TabsTrigger value="future" className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-[#F48120]" /> Future
+            <TabsTrigger value="future" className="flex items-center gap-2 text-xs font-bold data-[state=active]:text-[#F38020]">
+              <Zap className="w-3 h-3" /> Cloudflare
             </TabsTrigger>
           </TabsList>
         </Tabs>
         <div className="flex items-center gap-4 flex-1 justify-end">
-          <div className="hidden lg:flex items-center bg-gray-100 rounded-full p-1 gap-1">
-             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setSimulationSpeed(0.5)}>
-               <Rewind className={cn("w-4 h-4", simulationSpeed === 0.5 && "text-[#F48120]")} />
+          <div className="hidden lg:flex items-center bg-secondary/50 rounded-md p-1 gap-1">
+             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSimulationSpeed(0.5)}>
+               <Rewind className={cn("w-3.5 h-3.5", simulationSpeed === 0.5 && "text-[#F38020]")} />
              </Button>
-             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setSimulationSpeed(1.0)}>
-               <Play className={cn("w-4 h-4", simulationSpeed === 1.0 && "text-[#F48120]")} />
+             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSimulationSpeed(1.0)}>
+               <Play className={cn("w-3.5 h-3.5", simulationSpeed === 1.0 && "text-[#F38020]")} />
              </Button>
-             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => setSimulationSpeed(2.0)}>
-               <FastForward className={cn("w-4 h-4", simulationSpeed === 2.0 && "text-[#F48120]")} />
+             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSimulationSpeed(2.0)}>
+               <FastForward className={cn("w-3.5 h-3.5", simulationSpeed === 2.0 && "text-[#F38020]")} />
              </Button>
           </div>
           <TransformationInsights />
           <Button
             onClick={handleSave}
             disabled={isLoading}
-            className="bg-[#F48120] hover:bg-[#D14615] text-white gap-2 h-10 px-4 sketchy-border border-none"
+            className="bg-[#F38020] hover:bg-[#D14615] text-white font-bold h-10 px-6 rounded-md shadow-md transition-all active:scale-95"
           >
-            <Save className="w-4 h-4" /> {isLoading ? "..." : "Save"}
+            <Save className="w-4 h-4 mr-2" /> {isLoading ? "..." : "Save"}
           </Button>
         </div>
       </header>
@@ -101,25 +99,29 @@ export default function EditorPage() {
             <FlowCanvas />
           </div>
         </ReactFlowProvider>
-        <div className="absolute bottom-6 right-6 w-64 p-4 sketchy-card z-20 bg-white/95 shadow-lg pointer-events-none md:pointer-events-auto">
-          <h3 className="text-[10px] font-bold uppercase text-muted-foreground mb-2 flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" /> Live Stats
-          </h3>
-          <div className="space-y-2">
-            <div className="flex justify-between items-center">
-              <span className="text-xs font-medium">Latency</span>
-              <span className={cn("text-base font-bold", mode === 'legacy' ? "text-red-500" : "text-green-600")}>
-                {mode === 'legacy' ? '240ms' : '12ms'}
-              </span>
+        {/* Real-time stats HUD */}
+        <div className="absolute bottom-8 right-8 w-60 p-5 rounded-xl border border-border z-20 bg-white/95 shadow-xl pointer-events-none md:pointer-events-auto">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Live Edge Telemetry</span>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <div className="flex justify-between items-center mb-1.5">
+                <span className="text-xs font-semibold">Latency (ms)</span>
+                <span className={cn("text-lg font-black tracking-tighter", mode === 'legacy' ? "text-red-500" : "text-green-600")}>
+                  {mode === 'legacy' ? '240' : '12'}
+                </span>
+              </div>
+              <div className="w-full bg-secondary h-1.5 rounded-full overflow-hidden">
+                 <div
+                   className={cn("h-full transition-all duration-1000", mode === 'legacy' ? "bg-red-500 w-[85%]" : "bg-green-500 w-[5%]")}
+                 />
+              </div>
             </div>
-            <div className="w-full bg-gray-100 h-1 rounded-full overflow-hidden">
-               <div
-                 className={cn("h-full transition-all duration-1000", mode === 'legacy' ? "bg-red-500 w-[85%]" : "bg-green-500 w-[5%]")}
-               />
-            </div>
-            <div className="flex justify-between items-center text-[10px]">
-              <span className="text-muted-foreground">Architectural Hops</span>
-              <span className="font-bold">{mode === 'legacy' ? '8 Hops' : '1 Hop'}</span>
+            <div className="flex justify-between items-center pt-2 border-t border-border">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase">Hops</span>
+              <span className="text-xs font-black">{mode === 'legacy' ? '12 Hops' : '1 (Direct)'}</span>
             </div>
           </div>
         </div>

@@ -15,7 +15,14 @@ import { HomePage } from '@/pages/HomePage'
 import EditorPage from '@/pages/EditorPage'
 import DashboardPage from '@/pages/DashboardPage'
 import { Toaster } from '@/components/ui/sonner'
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 const router = createBrowserRouter([
   {
     path: "/",
@@ -38,7 +45,7 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <RouterProvider router={router} />
-        <Toaster position="bottom-right" />
+        <Toaster position="bottom-right" theme="light" expand={false} richColors />
       </ErrorBoundary>
     </QueryClientProvider>
   </StrictMode>,

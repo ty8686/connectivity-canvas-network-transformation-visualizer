@@ -1,62 +1,83 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Cloud, ArrowRight, MousePointer2, Sparkles, LayoutDashboard } from 'lucide-react';
+import { Cloud, ArrowRight, Shield, Zap, Globe, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import '@/styles/illustrative.css';
 export function HomePage() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background font-sans">
       <ThemeToggle />
-      <div className="py-12 md:py-20 lg:py-32 flex flex-col items-center text-center">
-        {/* Hero Sketch */}
-        <div className="relative mb-12 animate-in fade-in zoom-in duration-700">
-          <div className="absolute -top-12 -left-12 w-24 h-24 text-blue-400 opacity-40 floating">
-            <Cloud size={96} strokeWidth={1} />
+      {/* Hero Section */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="py-16 md:py-24 lg:py-32 flex flex-col items-center text-center">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-1000">
+            <Zap className="w-4 h-4 text-[#F38020]" />
+            <span className="text-xs font-bold uppercase tracking-wider text-[#F38020]">Connectivity Cloud Visualization</span>
           </div>
-          <div className="absolute -bottom-8 -right-12 w-20 h-20 text-orange-400 opacity-40 rotating">
-            <Sparkles size={80} strokeWidth={1} />
-          </div>
-          <div className="w-32 h-32 md:w-48 md:h-48 bg-orange-50 sketchy-border flex items-center justify-center relative shadow-xl">
-            <Cloud className="w-20 h-20 md:w-32 md:h-32 text-[#F48120]" strokeWidth={1.5} />
-            <div className="absolute -bottom-4 -right-4 bg-white p-2 sketchy-border shadow-md">
-              <MousePointer2 className="w-6 h-6 text-black" />
-            </div>
-          </div>
-        </div>
-        {/* Content */}
-        <div className="space-y-6 max-w-3xl">
-          <h1 className="font-illustrative text-5xl md:text-7xl lg:text-8xl text-foreground">
-            Connectivity <span className="text-[#F48120]">Canvas</span>
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tight text-foreground mb-8">
+            Network <span className="text-[#F38020]">Transformation</span>
           </h1>
-          <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl mx-auto font-sans">
-            Visualize your network transformation. Drag, drop, and collapse legacy complexity into the Cloudflare connectivity cloud.
+          <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-3xl mx-auto mb-12">
+            Model your legacy infrastructure and visualize the power of Cloudflare's consolidated edge architecture. Reduce latency, eliminate hops, and secure your global perimeter.
           </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/dashboard">
+              <Button size="lg" className="h-14 px-10 text-lg bg-[#F38020] hover:bg-[#D14615] text-white gap-3 rounded-md shadow-xl transition-all hover:scale-105 active:scale-95">
+                Go to Dashboard <ArrowRight size={20} />
+              </Button>
+            </Link>
+            <Link to="/editor">
+              <Button variant="outline" size="lg" className="h-14 px-10 text-lg rounded-md border-2 hover:bg-secondary transition-all">
+                New Visualization
+              </Button>
+            </Link>
+          </div>
         </div>
-        <div className="mt-12 flex flex-col sm:flex-row gap-4">
-          <Link to="/dashboard">
-            <Button size="lg" className="h-14 px-8 text-lg bg-[#F48120] hover:bg-[#D14615] text-white gap-3 rounded-none sketchy-border border-none shadow-lg hover:translate-y-[-2px] transition-transform">
-              Explore Dashboard <LayoutDashboard size={20} />
-            </Button>
-          </Link>
-          <Link to="/editor">
-            <Button variant="outline" size="lg" className="h-14 px-8 text-lg rounded-none sketchy-border gap-3 hover:bg-gray-50">
-              New Visualization <ArrowRight size={20} />
-            </Button>
-          </Link>
-        </div>
-        {/* Features Section */}
-        <div className="mt-24 py-8 md:py-12 grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-5xl">
+        {/* Value Props Section */}
+        <div className="py-16 grid grid-cols-1 md:grid-cols-3 gap-8 border-t border-border">
           {[
-            { label: 'Cloud-Native', desc: 'Map legacy appliances to global edge services in seconds.' },
-            { label: 'Real-time Simulation', desc: 'Watch animated packets traverse your architecture with live latency stats.' },
-            { label: 'Durable Canvas', desc: 'Save and share complex transformation roadmaps with your team.' },
+            { 
+              icon: Shield, 
+              label: 'Global Security', 
+              desc: 'Collapse physical appliances into a unified software-defined security perimeter at the edge.' 
+            },
+            { 
+              icon: Zap, 
+              label: 'Performance First', 
+              desc: 'Leverage Cloudflare’s global network to minimize latency and optimize traffic routing automatically.' 
+            },
+            { 
+              icon: Globe, 
+              label: 'Consolidated Stack', 
+              desc: 'Remove complexity by replacing fragmented vendors with a single, resilient connectivity cloud.' 
+            },
           ].map((item, idx) => (
-            <div key={idx} className="p-6 sketchy-card bg-white hover:border-[#F48120] transition-colors group">
-              <h3 className="font-illustrative text-2xl mb-2 group-hover:text-[#F48120] transition-colors">{item.label}</h3>
-              <p className="text-muted-foreground text-sm font-sans leading-relaxed">{item.desc}</p>
-            </div>
+            <Card key={idx} className="border-none shadow-sm hover:shadow-md transition-shadow bg-secondary/30">
+              <CardContent className="pt-8 px-8 pb-8 flex flex-col items-center text-center">
+                <div className="w-12 h-12 rounded-lg bg-white shadow-sm flex items-center justify-center text-[#F38020] mb-6">
+                  <item.icon size={28} />
+                </div>
+                <h3 className="text-xl font-bold mb-3">{item.label}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed">{item.desc}</p>
+              </CardContent>
+            </Card>
           ))}
+        </div>
+        {/* Bottom Banner */}
+        <div className="mt-12 mb-24 p-8 rounded-2xl bg-[#F38020] text-white flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden relative">
+          <div className="relative z-10">
+            <h2 className="text-3xl font-bold mb-2">Ready to transform?</h2>
+            <p className="text-orange-100 opacity-90 max-w-md">Start visualizing your journey from legacy hardware to edge-native connectivity today.</p>
+          </div>
+          <Link to="/dashboard" className="relative z-10">
+            <Button size="lg" variant="secondary" className="h-12 px-8 text-[#F38020] font-bold rounded-md hover:bg-white">
+              Launch Console
+            </Button>
+          </Link>
+          <div className="absolute top-0 right-0 -translate-y-1/2 translate-x-1/4 opacity-10">
+            <Cloud size={300} strokeWidth={1} />
+          </div>
         </div>
       </div>
     </div>
