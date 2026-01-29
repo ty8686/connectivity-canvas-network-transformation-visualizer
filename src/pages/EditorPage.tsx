@@ -58,7 +58,6 @@ export default function EditorPage() {
             />
           </div>
         </div>
-        {/* Custom Hardware-Style Mode Switcher */}
         <div className="flex items-center bg-gray-100 p-1 rounded-full border border-border w-[280px] relative shadow-inner">
           <button
             onClick={() => setMode('legacy')}
@@ -73,8 +72,8 @@ export default function EditorPage() {
             onClick={() => setMode('future')}
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-1.5 px-4 rounded-full text-xs font-black uppercase tracking-widest transition-all duration-300 z-10",
-              mode === 'future' 
-                ? "bg-[#F38020] text-white shadow-[0_0_15px_rgba(243,128,32,0.4)]" 
+              mode === 'future'
+                ? "bg-[#F38020] text-white shadow-[0_0_15px_rgba(243,128,32,0.4)]"
                 : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -105,14 +104,13 @@ export default function EditorPage() {
       </header>
       <main className="flex-1 relative">
         <ReactFlowProvider>
-          <ComponentToolbox />
-          {selectedNodeId && <NodeInspector />}
-          {selectedEdgeId && <EdgeInspector />}
           <div className="absolute inset-0 z-10">
             <FlowCanvas />
           </div>
+          <ComponentToolbox />
+          {selectedNodeId && <NodeInspector />}
+          {selectedEdgeId && <EdgeInspector />}
         </ReactFlowProvider>
-        {/* Real-time Telemetry HUD */}
         <div className="absolute bottom-8 right-8 w-72 p-6 rounded-2xl border border-border z-20 bg-white/95 shadow-2xl pointer-events-none md:pointer-events-auto backdrop-blur-md">
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-2">

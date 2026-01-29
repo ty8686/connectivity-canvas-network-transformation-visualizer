@@ -15,9 +15,10 @@ interface EditorState {
   selectedEdgeId: string | null;
   simulationSpeed: number;
   isLoading: boolean;
-  // Dynamic metrics
   latency: number;
   hops: number;
+  latencyDelta: number;
+  hopsDelta: number;
   setMode: (mode: ViewMode) => void;
   setProjectTitle: (title: string) => void;
   setSimulationSpeed: (speed: number) => void;
@@ -51,17 +52,34 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   isLoading: false,
   latency: 240,
   hops: 8,
+  latencyDelta: 0,
+  hopsDelta: 0,
   calculateMetrics: () => {
     const { nodes, edges, mode } = get();
+    const legacyBaselineLatency = 240;
+    const legacyBaselineHops = 8;
     if (mode === 'future') {
-      set({ latency: 12, hops: 1 });
+      const futureLatency = 12;
+      const futureHops = 1;
+      const lDelta = Math.round(((legacyBaselineLatency - futureLatency) / legacyBaselineLatency) * 100);
+      const hDelta = legacyBaselineHops / futureHops;
+      set({ 
+        latency: futureLatency, 
+        hops: futureHops,
+        latencyDelta: lDelta,
+        hopsDelta: hDelta
+      });
       return;
     }
-    // Legacy calculation: base latency + edge weights
     const edgeCount = edges.length;
     const totalWeight = edges.reduce((acc, edge) => acc + (Number(edge.data?.weight) || 1), 0);
     const calculatedLatency = Math.min(600, 40 + (totalWeight * 25));
-    set({ latency: calculatedLatency, hops: edgeCount });
+    set({ 
+      latency: calculatedLatency, 
+      hops: edgeCount,
+      latencyDelta: 0,
+      hopsDelta: 0
+    });
   },
   setMode: (mode) => {
     const currentNodes = get().nodes;
@@ -117,7 +135,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     get().calculateMetrics();
   },
   onConnect: (connection) => {
-    const edge = { ...connection, type: 'sketchy', animated: true, data: { weight: 1, label: '' } };
+    const edge = { ...connection, id: `e-${Date.now()}`, type: 'sketchy', animated: true, data: { weight: 1, label: '' } };
     set({ edges: addEdge(edge, get().edges) });
     get().calculateMetrics();
   },
@@ -190,6 +208,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         mode: project.metadata.hops > 1 ? 'legacy' : 'future',
         isLoading: false
       });
+      get().calculateMetrics();
     } catch (err) {
       console.error("Load failed", err);
       set({ isLoading: false });
@@ -213,7 +232,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       selectedNodeId: null,
       selectedEdgeId: null,
       latency: 240,
-      hops: 8
+      hops: 8,
+      latencyDelta: 0,
+      hopsDelta: 0
     });
   }
 }));

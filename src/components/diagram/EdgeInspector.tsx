@@ -5,7 +5,6 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
 import { Trash2, X, Zap } from 'lucide-react';
-import { cn } from '@/lib/utils';
 export function EdgeInspector() {
   const selectedId = useEditorStore(s => s.selectedEdgeId);
   const edges = useEditorStore(s => s.edges);
@@ -13,8 +12,12 @@ export function EdgeInspector() {
   const deleteEdge = useEditorStore(s => s.deleteEdge);
   const setSelectedEdgeId = useEditorStore(s => s.setSelectedEdgeId);
   const edge = edges.find(e => e.id === selectedId);
-  if (!edge) return null;
-  const weight = Number(edge.data?.weight) || 1;
+  if (!edge) {
+    if (selectedId) console.warn(`Edge with ID ${selectedId} not found in state.`);
+    return null;
+  }
+  const weight = typeof edge.data?.weight === 'number' ? edge.data.weight : 1;
+  const edgeLabel = (edge.data?.label as string) || "";
   return (
     <div className="absolute top-24 right-8 z-20 w-80 bg-white border border-border p-6 shadow-2xl rounded-xl animate-in fade-in slide-in-from-right-6 duration-300">
       <div className="flex justify-between items-center mb-6">
@@ -31,7 +34,7 @@ export function EdgeInspector() {
           <Label htmlFor="edge-label" className="text-[10px] uppercase font-black tracking-widest text-muted-foreground px-1">Link Label</Label>
           <Input
             id="edge-label"
-            value={edge.data?.label || ''}
+            value={edgeLabel}
             onChange={(e) => updateEdgeData(edge.id, { label: e.target.value })}
             className="rounded-md border-border h-10 focus-visible:ring-[#F38020] transition-shadow"
             placeholder="e.g. MPLS, VPN, Fiber"

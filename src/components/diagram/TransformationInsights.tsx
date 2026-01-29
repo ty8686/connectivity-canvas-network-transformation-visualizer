@@ -10,16 +10,15 @@ import {
 import { Button } from '@/components/ui/button';
 import { Info, Zap, TrendingDown } from 'lucide-react';
 import { useEditorStore } from '@/store/editor-store';
-import { cn } from '@/lib/utils';
 export function TransformationInsights() {
   const mode = useEditorStore(s => s.mode);
-  const latencyDelta = useEditorStore(s => s.comparisonStats.latencyDelta);
-  const hopsDelta = useEditorStore(s => s.comparisonStats.hopsDelta);
+  const latencyDelta = useEditorStore(s => s.latencyDelta);
+  const hopsDelta = useEditorStore(s => s.hopsDelta);
   return (
     <Dialog>
       <DialogTrigger asChild>
         <Button variant="outline" className="gap-2 rounded-md font-bold shadow-sm h-10 border-border bg-white">
-          <Info className="w-4 h-4 text-[#F38020]" /> 
+          <Info className="w-4 h-4 text-[#F38020]" />
           {mode === 'future' ? 'Performance Benefits' : 'Transformation ROI'}
         </Button>
       </DialogTrigger>
