@@ -31,13 +31,14 @@ export const SketchyEdge = memo(({
   const isActivePath = activePathEdgeIds.includes(id);
   const weight = Number(data?.weight) || 15;
   const label = data?.label as string;
-  // Arrow duration based on latency weight and distance
-  // Higher latency = Slower animation
+  // Path animation duration
+  // Normalize: 1ms -> 0.5s, 1000ms -> 5.0s
   const duration = useMemo(() => {
-    return Math.max(1, weight / 10);
+    return Math.max(0.5, (weight / 200) + 0.4);
   }, [weight]);
-  const strokeWidth = mode === 'future' ? 3 : 2;
+  const strokeWidth = mode === 'future' ? 4 : 2;
   const isHighlighted = isSelected || isActivePath;
+  const activeColor = mode === 'future' ? '#F38020' : '#2D2D2D';
   return (
     <>
       <BaseEdge
@@ -46,7 +47,7 @@ export const SketchyEdge = memo(({
         style={{
           ...style,
           strokeWidth: isHighlighted ? strokeWidth + 2 : strokeWidth,
-          stroke: isHighlighted ? '#F38020' : (mode === 'future' ? '#F38020' : '#2D2D2D'),
+          stroke: isHighlighted ? '#F38020' : activeColor,
           opacity: isHighlighted ? 1 : 0.4,
         }}
         className="wobbly-line transition-all duration-300"
@@ -58,10 +59,11 @@ export const SketchyEdge = memo(({
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
               pointerEvents: 'none',
+              zIndex: 50
             }}
-            className="px-2 py-1 bg-white/90 border-2 border-[#2D2D2D] rounded text-[9px] font-black shadow-sm backdrop-blur-sm z-10 uppercase italic"
+            className="px-2 py-1 bg-white border-2 border-[#2D2D2D] rounded text-[9px] font-black shadow-[2px_2px_0px_#2D2D2D] backdrop-blur-sm uppercase italic"
           >
-            {label && <span className="block border-b border-[#2D2D2D]/20 mb-0.5">{label}</span>}
+            {label && <span className="block border-b border-[#2D2D2D]/10 mb-0.5">{label}</span>}
             <span className="text-[#F38020]">{weight}ms</span>
           </div>
         )}
@@ -80,11 +82,12 @@ export const SketchyEdge = memo(({
             offsetRotate: "auto",
           }}
         >
-          {/* Thick Path-based Arrow Head */}
+          {/* Robust Arrow Head Path */}
           <path
-            d="M -8 -6 L 8 0 L -8 6 Z"
+            d="M -10 -7 L 10 0 L -10 7 Z"
             fill="#F38020"
-            className="packet-glow"
+            className="packet-glow shadow-xl"
+            style={{ filter: 'drop-shadow(0 0 6px rgba(243, 128, 32, 0.8))' }}
           />
         </motion.g>
       )}

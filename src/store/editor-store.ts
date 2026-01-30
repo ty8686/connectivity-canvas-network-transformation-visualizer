@@ -46,7 +46,10 @@ interface EditorState {
   calculateMetrics: () => void;
 }
 function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, endNodeIds: string[]) {
-  if (endNodeIds.length === 0) return null;
+  if (endNodeIds.length === 0 || !startNodeId) return null;
+  if (endNodeIds.includes(startNodeId)) {
+    return { latency: 0, hops: 0, nodeIds: [startNodeId], edgeIds: [] };
+  }
   const distances: Record<string, number> = { [startNodeId]: 0 };
   const previous: Record<string, { nodeId: string; edgeId: string } | null> = { [startNodeId]: null };
   const visited = new Set<string>();
@@ -72,8 +75,9 @@ function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, end
       }
       return { latency: d, hops: nodePath.length - 1, nodeIds: nodePath, edgeIds: edgePath };
     }
-    edges.filter(e => e.source === u).forEach(edge => {
-      const weight = Number(edge.data?.weight) || 15; // default to 15ms if not set
+    const outgoingEdges = edges.filter(e => e.source === u);
+    for (const edge of outgoingEdges) {
+      const weight = Number(edge.data?.weight) || 15;
       const to = edge.target;
       const newDist = d + weight;
       if (distances[to] === undefined || newDist < distances[to]) {
@@ -81,7 +85,7 @@ function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, end
         previous[to] = { nodeId: u, edgeId: edge.id };
         pq.push([to, newDist]);
       }
-    });
+    }
   }
   return null;
 }
@@ -106,10 +110,25 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   latencyDelta: 0,
   hopsDelta: 0,
   calculateMetrics: () => {
-    const { nodes, edges, mode } = get();
-    const startNodes = nodes.filter(n => n.data?.isTrafficStart === true);
-    const endNodeIds = nodes.filter(n => n.data?.isTrafficEnd === true).map(n => n.id);
-    const paths = startNodes
+    const { nodes, edges, mode, hoveredNodeId } = get();
+    const endNodeIds = nodes.filter(n => !!n.data?.isTrafficEnd).map(n => n.id);
+    const trafficStartNodes = nodes.filter(n => !!n.data?.isTrafficStart);
+    // Include hovered node as a start point to preview its path
+    const startPoints = [...trafficStartNodes];
+    if (hoveredNodeId && !trafficStartNodes.some(n => n.id === hoveredNodeId)) {
+      const hoveredNode = nodes.find(n => n.id === hoveredNodeId);
+      if (hoveredNode) startPoints.push(hoveredNode);
+    }
+    if (startPoints.length === 0 || endNodeIds.length === 0) {
+      set({ 
+        latency: mode === 'future' ? 12 : 240, 
+        hops: mode === 'future' ? 1 : 4,
+        activePathNodeIds: [],
+        activePathEdgeIds: []
+      });
+      return;
+    }
+    const paths = startPoints
       .map(u => findShortestPath(nodes, edges, u.id, endNodeIds))
       .filter(Boolean) as any[];
     const allNodeIds = new Set<string>();
@@ -124,8 +143,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     });
     const avgLatency = paths.length > 0 ? totalLatency / paths.length : (mode === 'future' ? 12 : 240);
     const avgHops = paths.length > 0 ? totalHops / paths.length : (mode === 'future' ? 1 : 4);
+    // ROI calculation: Compared to a static baseline of 240ms (Legacy default)
     const legacyBaselineLatency = 240;
-    const lDelta = Math.round(((legacyBaselineLatency - avgLatency) / Math.max(1, legacyBaselineLatency)) * 100);
+    const lDelta = Math.round(((legacyBaselineLatency - avgLatency) / legacyBaselineLatency) * 100);
     const hDelta = Math.round((4 / Math.max(1, avgHops)) * 10) / 10;
     set({
       latency: avgLatency,
@@ -140,6 +160,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const state = get();
     if (mode === state.mode) return;
     if (mode === 'future') {
+      // Create backup before transformation
       set({ legacyBackup: { nodes: [...state.nodes], edges: [...state.edges] } });
       const userNodes = state.nodes.filter(n => n.data?.isTrafficStart);
       const originNodes = state.nodes.filter(n => n.data?.iconType === 'database' || n.data?.iconType === 'server');
@@ -149,16 +170,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         id: 'cf-edge-auto',
         type: 'sketchy',
         position: { x: avgX, y: avgY },
-        data: { 
-          label: 'Cloudflare Connectivity Cloud', 
-          iconType: 'cloud', 
+        data: {
+          label: 'Cloudflare Connectivity Cloud',
+          iconType: 'cloud',
           isPrimary: true,
-          isTrafficEnd: false 
+          isTrafficEnd: false
         }
       };
       const newNodes = [
-        ...userNodes.map(n => ({ ...n, data: { ...n.data, isTrafficStart: true } })), 
-        cfNode, 
+        ...userNodes.map(n => ({ ...n, data: { ...n.data, isTrafficStart: true } })),
+        cfNode,
         ...originNodes.map(n => ({ ...n, data: { ...n.data, isTrafficEnd: true } }))
       ];
       const newEdges: Edge[] = [];
@@ -169,7 +190,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           target: cfNode.id,
           type: 'sketchy',
           animated: true,
-          data: { weight: 10 },
+          data: { weight: 10, label: 'Optimized Edge' },
           style: { stroke: '#F48120', strokeWidth: 3 }
         });
       });
@@ -180,14 +201,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           target: o.id,
           type: 'sketchy',
           animated: true,
-          data: { weight: 5 },
+          data: { weight: 5, label: 'Direct Origin' },
           style: { stroke: '#F48120', strokeWidth: 3 }
         });
       });
       set({ mode, nodes: newNodes, edges: newEdges });
     } else {
       if (state.legacyBackup) {
-        set({ mode, nodes: state.legacyBackup.nodes, edges: state.legacyBackup.edges });
+        set({ mode, nodes: state.legacyBackup.nodes, edges: state.legacyBackup.edges, legacyBackup: null });
       } else {
         set({ mode, nodes: DEMO_LEGACY_GRAPH.nodes, edges: DEMO_LEGACY_GRAPH.edges });
       }
@@ -198,7 +219,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   toggleAnimation: () => set(s => ({ isAnimating: !s.isAnimating })),
   setSelectedNodeId: (id) => set({ selectedNodeId: id, selectedEdgeId: null }),
   setSelectedEdgeId: (id) => set({ selectedEdgeId: id, selectedNodeId: null }),
-  setHoveredNodeId: (id) => set({ hoveredNodeId: id }),
+  setHoveredNodeId: (id) => {
+    set({ hoveredNodeId: id });
+    get().calculateMetrics();
+  },
   onNodesChange: (changes) => {
     set({ nodes: applyNodeChanges(changes, get().nodes) });
     get().calculateMetrics();
@@ -241,7 +265,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set({
       nodes: get().nodes.filter(n => n.id !== id),
       edges: get().edges.filter(e => e.source !== id && e.target !== id),
-      selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId
+      selectedNodeId: get().selectedNodeId === id ? null : get().selectedNodeId,
+      hoveredNodeId: get().hoveredNodeId === id ? null : get().hoveredNodeId
     });
     get().calculateMetrics();
   },
@@ -321,6 +346,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       legacyBackup: null,
       selectedNodeId: null,
       selectedEdgeId: null,
+      hoveredNodeId: null,
       latency: 240,
       hops: 4,
       latencyDelta: 0,

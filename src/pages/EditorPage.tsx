@@ -8,7 +8,6 @@ import { NodeInspector } from '@/components/diagram/NodeInspector';
 import { EdgeInspector } from '@/components/diagram/EdgeInspector';
 import { TransformationInsights } from '@/components/diagram/TransformationInsights';
 import { useEditorStore } from '@/store/editor-store';
-import { useShallow } from 'zustand/react/shallow';
 import { ReactFlowProvider } from '@xyflow/react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -29,22 +28,28 @@ export default function EditorPage() {
   const selectedEdgeId = useEditorStore(s => s.selectedEdgeId);
   const globalLatency = useEditorStore(s => s.latency);
   const globalHops = useEditorStore(s => s.hops);
+  const nodes = useEditorStore(s => s.nodes);
   useEffect(() => {
     if (projectIdParam) {
       loadProject(projectIdParam);
     }
   }, [projectIdParam, loadProject]);
   const handleSave = async () => {
+    if (nodes.length === 0) {
+      toast.error("Cannot save an empty canvas");
+      return;
+    }
     try {
       await saveProject();
-      toast.success("Design saved successfully");
+      toast.success("Architecture design saved");
     } catch (err) {
-      toast.error("Failed to save work");
+      toast.error("Failed to sync project state");
     }
   };
+  const displayLatency = nodes.length > 0 && globalLatency > 0 ? `${Math.round(globalLatency)}ms` : "--";
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden font-sans">
-      <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-white z-30 shadow-sm gap-4">
+      <header className="h-16 border-b border-[#2D2D2D]/10 flex items-center justify-between px-6 bg-white z-30 shadow-sm gap-4">
         <div className="flex items-center gap-4 flex-1 min-w-0">
           <div className="flex items-center gap-2 text-muted-foreground shrink-0">
             <Link to="/dashboard" className="hover:text-foreground transition-colors">
@@ -54,72 +59,58 @@ export default function EditorPage() {
             <input
               value={projectTitle}
               onChange={(e) => setProjectTitle(e.target.value)}
-              className="font-bold text-sm tracking-tight text-[#2D2D2D] bg-transparent border-none focus:ring-0 p-0 hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors w-32 md:w-48 overflow-hidden text-ellipsis whitespace-nowrap"
-              placeholder="Unnamed Canvas..."
+              className="font-black text-xs uppercase tracking-widest text-[#2D2D2D] bg-transparent border-none focus:ring-0 p-0 hover:bg-slate-100 rounded px-2 py-1 transition-colors w-32 md:w-56 overflow-hidden text-ellipsis whitespace-nowrap italic"
+              placeholder="Design Title..."
             />
           </div>
-          <div className={cn(
-            "hidden sm:flex items-center bg-gray-50 border rounded-lg px-3 py-1.5 gap-4 transition-all duration-300 border-border"
-          )}>
-            <div className="flex items-center gap-2">
-              <Activity className={cn("w-3.5 h-3.5", mode === 'legacy' ? "text-muted-foreground" : "text-green-500", isAnimating && "animate-pulse")} />
-              <div className="flex flex-col">
-                <span className="text-[8px] font-black uppercase text-[#2D2D2D] leading-none opacity-60">
-                  Total Path Latency
-                </span>
-                <span className={cn(
-                  "text-xs font-black tracking-tighter transition-colors",
-                  mode === 'legacy' ? "text-[#2D2D2D]" : "text-green-600"
-                )}>
-                  {Math.round(globalLatency)}ms
-                </span>
-              </div>
-            </div>
-            <div className="w-px h-6 bg-border" />
+          <div className="hidden sm:flex items-center bg-slate-50 border-2 border-slate-100 rounded-lg px-3 py-1 gap-4">
             <div className="flex flex-col">
-              <span className="text-[8px] font-black uppercase text-[#2D2D2D] leading-none opacity-60">
-                Total Path Hops
+              <span className="text-[7px] font-black uppercase text-muted-foreground leading-none">Latency Baseline</span>
+              <span className={cn("text-xs font-black tracking-tight", mode === 'future' ? "text-green-600" : "text-[#2D2D2D]")}>
+                {displayLatency}
               </span>
-              <span className={cn("text-xs font-black transition-colors text-[#2D2D2D]")}>
-                {globalHops}
-              </span>
+            </div>
+            <div className="w-px h-6 bg-slate-200" />
+            <div className="flex flex-col">
+              <span className="text-[7px] font-black uppercase text-muted-foreground leading-none">Total Hops</span>
+              <span className="text-xs font-black text-[#2D2D2D]">{globalHops || "--"}</span>
             </div>
           </div>
         </div>
-        <div className="flex items-center bg-gray-100 p-1 rounded-full border border-border w-[240px] md:w-[300px] relative shadow-inner shrink-0">
+        <div className="flex items-center bg-slate-100 p-1 rounded-full border-2 border-slate-200 w-[240px] md:w-[320px] relative shadow-inner shrink-0">
           <button
             onClick={() => setMode('legacy')}
             className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-1.5 px-3 md:px-4 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all duration-300 z-10",
-              mode === 'legacy' ? "bg-white text-[#2D2D2D] shadow-sm" : "text-muted-foreground/60 hover:text-[#2D2D2D]"
+              "flex-1 flex items-center justify-center gap-2 py-1.5 px-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 z-10",
+              mode === 'legacy' ? "bg-white text-[#2D2D2D] shadow-md border border-slate-200" : "text-slate-400 hover:text-slate-600"
             )}
           >
-            Legacy
+            Infrastructure
           </button>
           <button
             onClick={() => setMode('future')}
             className={cn(
-              "flex-1 flex items-center justify-center gap-2 py-1.5 px-3 md:px-4 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all duration-300 z-10",
+              "flex-1 flex items-center justify-center gap-2 py-1.5 px-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 z-10",
               mode === 'future'
-                ? "bg-[#F38020] text-white shadow-[0_0_15px_rgba(243,128,32,0.4)]"
-                : "text-muted-foreground/60 hover:text-[#2D2D2D]"
+                ? "bg-[#F38020] text-white shadow-[0_0_15px_rgba(243,128,32,0.3)]"
+                : "text-slate-400 hover:text-slate-600"
             )}
           >
             <Zap className={cn("w-3 h-3", mode === 'future' ? "fill-current" : "")} /> Cloudflare
           </button>
         </div>
         <div className="flex items-center gap-2 md:gap-4 flex-1 justify-end">
-          <Button 
-            variant="outline" 
-            size="sm" 
+          <Button
+            variant="outline"
+            size="sm"
             onClick={toggleAnimation}
             className={cn(
-              "rounded-full font-black text-[10px] uppercase gap-2 border-2 px-4 transition-all h-9",
-              isAnimating ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-50 text-gray-500 border-gray-200"
+              "rounded-full font-black text-[9px] uppercase gap-2 border-2 px-4 transition-all h-9 active:scale-95",
+              isAnimating ? "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm" : "bg-slate-50 text-slate-500 border-slate-200"
             )}
           >
             {isAnimating ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current" />}
-            {isAnimating ? "Simulation On" : "Simulation Paused"}
+            {isAnimating ? "Active Flow" : "Flow Paused"}
           </Button>
           <TransformationInsights />
         </div>
@@ -134,11 +125,11 @@ export default function EditorPage() {
           {selectedEdgeId && <EdgeInspector />}
           <Button
             onClick={handleSave}
-            disabled={isLoading}
-            className="fixed bottom-6 right-6 z-40 bg-[#F38020] hover:bg-[#D14615] text-white font-bold h-14 px-8 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 group border-2 border-white"
+            disabled={isLoading || nodes.length === 0}
+            className="fixed bottom-8 right-8 z-40 bg-[#F38020] hover:bg-[#D14615] text-white font-black h-14 px-10 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 border-4 border-white"
           >
-            <Save className={cn("w-5 h-5 mr-2", isLoading && "animate-spin")} />
-            <span>{isLoading ? "Saving..." : "Save Canvas"}</span>
+            <Save className={cn("w-5 h-5 mr-3", isLoading && "animate-spin")} />
+            <span>{isLoading ? "SAVING WORK..." : "SYNC TO CLOUD"}</span>
           </Button>
         </ReactFlowProvider>
       </main>
