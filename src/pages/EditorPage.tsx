@@ -58,7 +58,7 @@ export default function EditorPage() {
             <input
               value={projectTitle}
               onChange={(e) => setProjectTitle(e.target.value)}
-              className="font-bold text-sm tracking-tight text-foreground bg-transparent border-none focus:ring-0 p-0 hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors w-32 md:w-48 overflow-hidden text-ellipsis whitespace-nowrap"
+              className="font-bold text-sm tracking-tight text-[#2D2D2D] bg-transparent border-none focus:ring-0 p-0 hover:bg-secondary/50 rounded-md px-2 py-1 transition-colors w-32 md:w-48 overflow-hidden text-ellipsis whitespace-nowrap"
               placeholder="Unnamed Canvas..."
             />
           </div>
@@ -69,12 +69,12 @@ export default function EditorPage() {
             <div className="flex items-center gap-2">
               <Activity className={cn("w-3.5 h-3.5", mode === 'legacy' ? "text-muted-foreground" : "text-green-500", isPreviewMode && "animate-pulse")} />
               <div className="flex flex-col">
-                <span className="text-[8px] font-black uppercase text-muted-foreground leading-none">
+                <span className="text-[8px] font-black uppercase text-[#2D2D2D] leading-none opacity-60">
                   {isPreviewMode ? "Path Latency" : "Avg Latency"}
                 </span>
                 <span className={cn(
                   "text-xs font-black tracking-tighter transition-colors",
-                  mode === 'legacy' ? "text-muted-foreground" : "text-green-600",
+                  mode === 'legacy' ? "text-[#2D2D2D]" : "text-green-600",
                   isPreviewMode && "text-[#F38020]"
                 )}>
                   {Math.round(currentLatency)}ms
@@ -83,10 +83,10 @@ export default function EditorPage() {
             </div>
             <div className="w-px h-6 bg-border" />
             <div className="flex flex-col">
-              <span className="text-[8px] font-black uppercase text-muted-foreground leading-none">
+              <span className="text-[8px] font-black uppercase text-[#2D2D2D] leading-none opacity-60">
                 {isPreviewMode ? "Path Hops" : "Avg Hops"}
               </span>
-              <span className={cn("text-xs font-black transition-colors", isPreviewMode ? "text-[#F38020]" : "text-foreground")}>
+              <span className={cn("text-xs font-black transition-colors text-[#2D2D2D]", isPreviewMode && "text-[#F38020]")}>
                 {currentHops}
               </span>
             </div>
@@ -97,7 +97,7 @@ export default function EditorPage() {
             onClick={() => setMode('legacy')}
             className={cn(
               "flex-1 flex items-center justify-center gap-2 py-1.5 px-3 md:px-4 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all duration-300 z-10",
-              mode === 'legacy' ? "bg-white text-muted-foreground shadow-sm" : "text-muted-foreground/60 hover:text-muted-foreground"
+              mode === 'legacy' ? "bg-white text-[#2D2D2D] shadow-sm" : "text-muted-foreground/60 hover:text-[#2D2D2D]"
             )}
           >
             Legacy
@@ -108,7 +108,7 @@ export default function EditorPage() {
               "flex-1 flex items-center justify-center gap-2 py-1.5 px-3 md:px-4 rounded-full text-[10px] md:text-xs font-black uppercase tracking-widest transition-all duration-300 z-10",
               mode === 'future'
                 ? "bg-[#F38020] text-white shadow-[0_0_15px_rgba(243,128,32,0.4)]"
-                : "text-muted-foreground/60 hover:text-muted-foreground"
+                : "text-muted-foreground/60 hover:text-[#2D2D2D]"
             )}
           >
             <Zap className={cn("w-3 h-3", mode === 'future' ? "fill-current" : "")} /> Cloudflare
@@ -127,13 +127,6 @@ export default function EditorPage() {
              </Button>
           </div>
           <TransformationInsights />
-          <Button
-            onClick={handleSave}
-            disabled={isLoading}
-            className="bg-[#F38020] hover:bg-[#D14615] text-white font-bold h-10 px-4 md:px-6 rounded-md shadow-md transition-all active:scale-95"
-          >
-            <Save className="w-4 h-4 md:mr-2" /> <span className="hidden md:inline">{isLoading ? "..." : "Save"}</span>
-          </Button>
         </div>
       </header>
       <main className="flex-1 relative">
@@ -144,6 +137,14 @@ export default function EditorPage() {
           <ComponentToolbox />
           {selectedNodeId && <NodeInspector />}
           {selectedEdgeId && <EdgeInspector />}
+          <Button
+            onClick={handleSave}
+            disabled={isLoading}
+            className="fixed bottom-6 right-6 z-40 bg-[#F38020] hover:bg-[#D14615] text-white font-bold h-14 px-8 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 group"
+          >
+            <Save className={cn("w-5 h-5 mr-2", isLoading && "animate-spin")} /> 
+            <span>{isLoading ? "Saving..." : "Save Canvas"}</span>
+          </Button>
         </ReactFlowProvider>
       </main>
     </div>

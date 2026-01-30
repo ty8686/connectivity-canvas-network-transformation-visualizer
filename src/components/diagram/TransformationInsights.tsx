@@ -18,38 +18,38 @@ export function TransformationInsights() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 rounded-md font-bold shadow-sm h-10 border-border bg-white hover:bg-orange-50 hover:border-orange-200 transition-all text-[#F38020]">
-          <Info className="w-4 h-4 text-[#F38020]" />
+        <Button className="gap-2 rounded-md font-bold shadow-lg h-10 bg-[#F38020] hover:bg-[#D14615] text-white border-none transition-all active:scale-95">
+          <Info className="w-4 h-4" />
           {mode === 'future' ? 'Transformation ROI' : 'Explore Benefits'}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-2xl font-sans rounded-xl p-0 border-none shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
-        <div className="p-8 space-y-8 bg-white">
+        <div className="p-8 space-y-8 bg-white font-sans text-[#2D2D2D]">
           <DialogHeader>
-            <DialogTitle className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
+            <DialogTitle className="text-3xl font-extrabold tracking-tight flex items-center gap-3 text-[#2D2D2D]">
               <Zap className="text-[#F38020] w-8 h-8" />
               Connectivity Transformation
             </DialogTitle>
-            <DialogDescription className="text-muted-foreground text-sm pt-2">
+            <DialogDescription className="text-[#2D2D2D] opacity-70 text-sm pt-2">
               Analysis of performance improvements when transitioning from legacy hardware to Cloudflare edge nodes.
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4 group">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground px-1">Legacy Stack</h4>
+              <h4 className="text-xs font-bold uppercase tracking-widest text-[#2D2D2D] opacity-60 px-1">Legacy Stack</h4>
               <div className="p-5 rounded-lg border border-border bg-secondary/30 group-hover:bg-secondary/50 transition-colors">
                 <ul className="space-y-3">
                   <li className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-medium">Avg Latency</span>
+                    <span className="text-[#2D2D2D] font-medium">Avg Latency</span>
                     <span className="font-bold text-red-500">240ms</span>
                   </li>
                   <li className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-medium">Network Hops</span>
+                    <span className="text-[#2D2D2D] font-medium">Network Hops</span>
                     <span className="font-bold text-red-500">8+ Steps</span>
                   </li>
                   <li className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-medium">Security</span>
-                    <span className="font-bold">Hardware</span>
+                    <span className="text-[#2D2D2D] font-medium">Security</span>
+                    <span className="font-bold text-[#2D2D2D]">Hardware</span>
                   </li>
                 </ul>
               </div>
@@ -59,15 +59,15 @@ export function TransformationInsights() {
               <div className="p-5 rounded-lg border border-orange-100 bg-orange-50/50 group-hover:bg-orange-50 transition-colors">
                 <ul className="space-y-3">
                   <li className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-medium">Edge Latency</span>
+                    <span className="text-[#2D2D2D] font-medium">Edge Latency</span>
                     <span className="font-bold text-green-600">~12ms</span>
                   </li>
                   <li className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-medium">Traversal Hops</span>
+                    <span className="text-[#2D2D2D] font-medium">Traversal Hops</span>
                     <span className="font-bold text-green-600">1 (Direct)</span>
                   </li>
                   <li className="flex justify-between items-center text-sm">
-                    <span className="text-muted-foreground font-medium">Security</span>
+                    <span className="text-[#2D2D2D] font-medium">Security</span>
                     <span className="font-bold text-[#F38020]">Global Cloud</span>
                   </li>
                 </ul>
