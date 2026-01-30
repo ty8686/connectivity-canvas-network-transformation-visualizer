@@ -81,7 +81,8 @@ function runSetupCommands() {
     "bun add @xyflow/react@^12.0.0",
     "bun add dagre@^0.8.5",
     "bun add recharts",
-    "bun add lucide-react @xyflow/react zustand framer-motion clsx tailwind-merge"
+    "bun add lucide-react @xyflow/react zustand framer-motion clsx tailwind-merge",
+    "bun add @xyflow/react"
 ];
     
     if (commands.length === 0) {
