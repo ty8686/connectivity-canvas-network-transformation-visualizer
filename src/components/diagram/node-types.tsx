@@ -31,7 +31,6 @@ export const SketchyNode = memo(({ id, data }: NodeProps) => {
       isActivePath && "ring-4 ring-[#F38020]/20 scale-105 z-50",
       isHovered && "translate-y-[-2px] shadow-[6px_6px_0px_#2D2D2D]"
     )}>
-      {/* Dynamic Role Indicators */}
       <div className="absolute -top-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
         {isTrafficStart && (
           <div className="bg-blue-600 text-white p-1 rounded-full shadow-lg border-2 border-white animate-bounce">
@@ -53,7 +52,7 @@ export const SketchyNode = memo(({ id, data }: NodeProps) => {
         <Icon size={22} strokeWidth={2.5} />
       </div>
       <span
-        className="text-[10px] font-black font-sans uppercase tracking-tight transition-colors duration-500"
+        className="text-[10px] font-bold font-sans uppercase tracking-normal transition-colors duration-500"
         style={{ color: isActivePath ? '#F38020' : (isHovered ? '#F38020' : activeColor) }}
       >
         {data.label as string}

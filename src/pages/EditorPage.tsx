@@ -65,24 +65,24 @@ export default function EditorPage() {
               <input
                 value={projectTitle}
                 onChange={(e) => setProjectTitle(e.target.value)}
-                className="font-black text-xs uppercase tracking-widest text-[#2D2D2D] bg-transparent border-none focus:ring-2 focus:ring-[#F38020]/20 p-0 hover:bg-slate-50 rounded px-2 py-1 transition-all w-full overflow-hidden text-ellipsis whitespace-nowrap italic cursor-text"
+                className="font-bold text-xs uppercase tracking-widest text-[#2D2D2D] bg-transparent border-none focus:ring-2 focus:ring-[#F38020]/20 p-0 hover:bg-slate-50 rounded px-2 py-1 transition-all w-full overflow-hidden text-ellipsis whitespace-nowrap italic cursor-text"
                 placeholder="Design Title..."
               />
             </div>
           </div>
           <div className="hidden sm:flex items-center bg-slate-50 border-2 border-slate-100 rounded-lg px-2 md:px-3 py-1 gap-2 md:gap-4 shadow-inner">
             <div className="flex flex-col cursor-help" title="Avg. time for packets to traverse the active paths">
-              <span className="text-[7px] font-black uppercase text-muted-foreground leading-none flex items-center gap-1">
+              <span className="text-[7px] font-semibold uppercase text-muted-foreground leading-none flex items-center gap-1">
                 Latency <Info className="w-2 h-2 opacity-50" />
               </span>
-              <span className={cn("text-[10px] md:text-xs font-black tracking-tight", mode === 'future' ? "text-emerald-600" : "text-[#2D2D2D]")}>
+              <span className={cn("text-[10px] md:text-xs font-bold tracking-tight", mode === 'future' ? "text-emerald-600" : "text-[#2D2D2D]")}>
                 {displayLatency}
               </span>
             </div>
             <div className="w-px h-6 bg-slate-200" />
             <div className="flex flex-col">
-              <span className="text-[7px] font-black uppercase text-muted-foreground leading-none">Total Hops</span>
-              <span className="text-[10px] md:text-xs font-black text-[#2D2D2D]">{displayHops}</span>
+              <span className="text-[7px] font-semibold uppercase text-muted-foreground leading-none">Total Hops</span>
+              <span className="text-[10px] md:text-xs font-bold text-[#2D2D2D]">{displayHops}</span>
             </div>
           </div>
         </div>
@@ -90,7 +90,7 @@ export default function EditorPage() {
           <button
             onClick={() => setMode('legacy')}
             className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 md:gap-2 py-1.5 px-2 md:px-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all duration-300 z-10",
+              "flex-1 flex items-center justify-center gap-1.5 md:gap-2 py-1.5 px-2 md:px-3 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 z-10",
               mode === 'legacy' ? "bg-white text-[#2D2D2D] shadow-md border border-slate-200" : "text-slate-400 hover:text-slate-600"
             )}
           >
@@ -99,9 +99,9 @@ export default function EditorPage() {
           <button
             onClick={() => setMode('future')}
             className={cn(
-              "flex-1 flex items-center justify-center gap-1.5 md:gap-2 py-1.5 px-2 md:px-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all duration-300 z-10",
-              mode === 'future' 
-                ? "bg-[#F38020] text-white shadow-[0_0_15px_rgba(243,128,32,0.3)]" 
+              "flex-1 flex items-center justify-center gap-1.5 md:gap-2 py-1.5 px-2 md:px-3 rounded-full text-[9px] md:text-[10px] font-bold uppercase tracking-widest transition-all duration-300 z-10",
+              mode === 'future'
+                ? "bg-[#F38020] text-white shadow-[0_0_15px_rgba(243,128,32,0.3)]"
                 : "text-slate-400 hover:text-slate-600"
             )}
           >
@@ -114,7 +114,7 @@ export default function EditorPage() {
             size="sm"
             onClick={toggleAnimation}
             className={cn(
-              "rounded-full font-black text-[9px] uppercase gap-2 border-2 px-4 transition-all h-9 active:scale-95 hidden md:flex",
+              "rounded-full font-bold text-[9px] uppercase gap-2 border-2 px-4 transition-all h-9 active:scale-95 hidden md:flex",
               isAnimating ? "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm" : "bg-slate-50 text-slate-500 border-slate-200"
             )}
           >
@@ -137,7 +137,7 @@ export default function EditorPage() {
               onClick={handleSave}
               disabled={isLoading || nodes.length === 0}
               className={cn(
-                "bg-[#F38020] hover:bg-[#D14615] text-white font-black h-14 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 border-4 border-white min-w-[180px]",
+                "bg-[#F38020] hover:bg-[#D14615] text-white font-bold h-14 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 border-4 border-white min-w-[180px]",
                 isLoading ? "opacity-90 cursor-not-allowed" : ""
               )}
             >
