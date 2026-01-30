@@ -37,6 +37,14 @@ export const SketchyEdge = memo(({
   const activeColor = mode === 'future' ? '#F38020' : '#2D2D2D';
   return (
     <>
+      {/* Invisible larger hit area for easier selection */}
+      <path
+        d={edgePath}
+        fill="none"
+        stroke="transparent"
+        strokeWidth={20}
+        className="react-flow__edge-interaction pointer-events-auto cursor-pointer"
+      />
       <BaseEdge
         path={edgePath}
         markerEnd={markerEnd}
@@ -68,9 +76,9 @@ export const SketchyEdge = memo(({
         <motion.g
           key={`${id}-anim-${idx}`}
           initial={{ offsetDistance: "0%", opacity: 0 }}
-          animate={{ 
+          animate={{
             offsetDistance: "100%",
-            opacity: [0, 1, 1, 0] // Fade in/out at start/end of the segment
+            opacity: [0, 1, 1, 0]
           }}
           transition={{
             duration: timing.duration,
@@ -83,6 +91,7 @@ export const SketchyEdge = memo(({
           style={{
             offsetPath: `path('${edgePath}')`,
             offsetRotate: "auto",
+            pointerEvents: 'none'
           }}
         >
           <path

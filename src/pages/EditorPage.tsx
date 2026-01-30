@@ -11,6 +11,7 @@ import { useEditorStore } from '@/store/editor-store';
 import { ReactFlowProvider } from '@xyflow/react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useShallow } from 'zustand/react/shallow';
 import '@/styles/illustrative.css';
 export default function EditorPage() {
   const [searchParams] = useSearchParams();
@@ -28,10 +29,13 @@ export default function EditorPage() {
   const selectedEdgeId = useEditorStore(s => s.selectedEdgeId);
   const globalLatency = useEditorStore(s => s.latency);
   const globalHops = useEditorStore(s => s.hops);
-  const nodes = useEditorStore(s => s.nodes);
+  const nodes = useEditorStore(useShallow(s => s.nodes));
   useEffect(() => {
     if (projectIdParam) {
-      loadProject(projectIdParam);
+      loadProject(projectIdParam).catch(err => {
+        console.error(`Editor Project Load Failure: ${err?.message || String(err)}`);
+        toast.error("Failed to load project from cloud storage");
+      });
     }
   }, [projectIdParam, loadProject]);
   const handleSave = async () => {

@@ -1,9 +1,10 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useMemo } from 'react';
 import { ReactFlow, Controls, NodeTypes, EdgeTypes, useReactFlow, DefaultEdgeOptions } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEditorStore } from '@/store/editor-store';
 import { SketchyNode } from './node-types';
 import { SketchyEdge } from './edge-types';
+import { useShallow } from 'zustand/react/shallow';
 const nodeTypes: NodeTypes = {
   sketchy: SketchyNode,
 };
@@ -16,8 +17,8 @@ const defaultEdgeOptions: DefaultEdgeOptions = {
   data: { weight: 1, label: '' }
 };
 export function FlowCanvas() {
-  const nodes = useEditorStore(s => s.nodes);
-  const edges = useEditorStore(s => s.edges);
+  const nodes = useEditorStore(useShallow(s => s.nodes));
+  const edges = useEditorStore(useShallow(s => s.edges));
   const onNodesChange = useEditorStore(s => s.onNodesChange);
   const onEdgesChange = useEditorStore(s => s.onEdgesChange);
   const onConnect = useEditorStore(s => s.onConnect);

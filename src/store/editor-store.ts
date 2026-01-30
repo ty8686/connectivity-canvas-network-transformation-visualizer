@@ -204,8 +204,12 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       set({ legacyBackup: { nodes: [...state.nodes], edges: [...state.edges] } });
       const userNodes = state.nodes.filter(n => n.data?.isTrafficStart);
       const originNodes = state.nodes.filter(n => n.data?.iconType === 'database' || n.data?.iconType === 'server' || n.data?.isTrafficEnd);
-      const avgX = state.nodes.reduce((acc, n) => acc + n.position.x, 0) / Math.max(1, state.nodes.length);
-      const avgY = state.nodes.reduce((acc, n) => acc + n.position.y, 0) / Math.max(1, state.nodes.length);
+      const avgX = state.nodes.length > 0 
+        ? state.nodes.reduce((acc, n) => acc + n.position.x, 0) / state.nodes.length
+        : 450;
+      const avgY = state.nodes.length > 0
+        ? state.nodes.reduce((acc, n) => acc + n.position.y, 0) / state.nodes.length
+        : 250;
       const cfNode: Node = {
         id: 'cf-edge-auto',
         type: 'sketchy',
@@ -356,16 +360,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         projectTitle: project.title,
         nodes: project.nodes,
         edges: project.edges,
-        latency: project.metadata.latency,
-        hops: project.metadata.hops,
-        mode: project.metadata.mode || 'legacy',
+        latency: project.metadata?.latency || 0,
+        hops: project.metadata?.hops || 0,
+        mode: project.metadata?.mode || 'legacy',
         isLoading: false,
         legacyBackup: null
       });
       get().calculateMetrics();
     } catch (err) {
-      console.error("Load failed:", err);
       set({ isLoading: false });
+      throw err;
     }
   },
   deleteProject: async (id: string) => {

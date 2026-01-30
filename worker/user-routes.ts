@@ -9,13 +9,14 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const cursor = c.req.query('cursor');
     const limit = c.req.query('limit');
     const page = await ProjectEntity.list(
-      c.env, 
-      cursor ?? null, 
+      c.env,
+      cursor ?? null,
       limit ? Math.max(1, (Number(limit) | 0)) : 100
     );
     return ok(c, page);
   });
   app.get('/api/projects/:id', async (c) => {
+    await ProjectEntity.ensureSeed(c.env);
     const id = c.req.param('id');
     const project = new ProjectEntity(c.env, id);
     if (!await project.exists()) return notFound(c, 'project not found');
@@ -28,9 +29,9 @@ export function userRoutes(app: Hono<{ Bindings: Env }>) {
     const projectState = {
       ...body,
       id,
-      metadata: { 
-        ...body.metadata, 
-        updatedAt: Date.now() 
+      metadata: {
+        ...body.metadata,
+        updatedAt: Date.now()
       }
     };
     if (isNew) {
