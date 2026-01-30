@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Home, Save, Rewind, Play, FastForward, Zap, Activity } from 'lucide-react';
+import { ChevronRight, Home, Save, Play, Pause, Zap, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FlowCanvas } from '@/components/diagram/FlowCanvas';
 import { ComponentToolbox } from '@/components/diagram/ComponentToolbox';
@@ -20,8 +20,8 @@ export default function EditorPage() {
   const setMode = useEditorStore(s => s.setMode);
   const projectTitle = useEditorStore(s => s.projectTitle);
   const setProjectTitle = useEditorStore(s => s.setProjectTitle);
-  const simulationSpeed = useEditorStore(s => s.simulationSpeed);
-  const setSimulationSpeed = useEditorStore(s => s.setSimulationSpeed);
+  const isAnimating = useEditorStore(s => s.isAnimating);
+  const toggleAnimation = useEditorStore(s => s.toggleAnimation);
   const saveProject = useEditorStore(s => s.saveProject);
   const loadProject = useEditorStore(s => s.loadProject);
   const isLoading = useEditorStore(s => s.isLoading);
@@ -29,7 +29,6 @@ export default function EditorPage() {
   const selectedEdgeId = useEditorStore(s => s.selectedEdgeId);
   const globalLatency = useEditorStore(s => s.latency);
   const globalHops = useEditorStore(s => s.hops);
-  const previewMetrics = useEditorStore(useShallow(s => s.previewMetrics));
   useEffect(() => {
     if (projectIdParam) {
       loadProject(projectIdParam);
@@ -43,9 +42,6 @@ export default function EditorPage() {
       toast.error("Failed to save work");
     }
   };
-  const currentLatency = previewMetrics ? previewMetrics.latency : globalLatency;
-  const currentHops = previewMetrics ? previewMetrics.hops : globalHops;
-  const isPreviewMode = !!previewMetrics;
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden font-sans">
       <header className="h-16 border-b border-border flex items-center justify-between px-6 bg-white z-30 shadow-sm gap-4">
@@ -63,31 +59,29 @@ export default function EditorPage() {
             />
           </div>
           <div className={cn(
-            "hidden sm:flex items-center bg-gray-50 border rounded-lg px-3 py-1.5 gap-4 transition-all duration-300",
-            isPreviewMode ? "border-[#F38020] bg-orange-50/30 scale-105 shadow-sm" : "border-border"
+            "hidden sm:flex items-center bg-gray-50 border rounded-lg px-3 py-1.5 gap-4 transition-all duration-300 border-border"
           )}>
             <div className="flex items-center gap-2">
-              <Activity className={cn("w-3.5 h-3.5", mode === 'legacy' ? "text-muted-foreground" : "text-green-500", isPreviewMode && "animate-pulse")} />
+              <Activity className={cn("w-3.5 h-3.5", mode === 'legacy' ? "text-muted-foreground" : "text-green-500", isAnimating && "animate-pulse")} />
               <div className="flex flex-col">
                 <span className="text-[8px] font-black uppercase text-[#2D2D2D] leading-none opacity-60">
-                  {isPreviewMode ? "Path Latency" : "Avg Latency"}
+                  Total Path Latency
                 </span>
                 <span className={cn(
                   "text-xs font-black tracking-tighter transition-colors",
-                  mode === 'legacy' ? "text-[#2D2D2D]" : "text-green-600",
-                  isPreviewMode && "text-[#F38020]"
+                  mode === 'legacy' ? "text-[#2D2D2D]" : "text-green-600"
                 )}>
-                  {Math.round(currentLatency)}ms
+                  {Math.round(globalLatency)}ms
                 </span>
               </div>
             </div>
             <div className="w-px h-6 bg-border" />
             <div className="flex flex-col">
               <span className="text-[8px] font-black uppercase text-[#2D2D2D] leading-none opacity-60">
-                {isPreviewMode ? "Path Hops" : "Avg Hops"}
+                Total Path Hops
               </span>
-              <span className={cn("text-xs font-black transition-colors text-[#2D2D2D]", isPreviewMode && "text-[#F38020]")}>
-                {currentHops}
+              <span className={cn("text-xs font-black transition-colors text-[#2D2D2D]")}>
+                {globalHops}
               </span>
             </div>
           </div>
@@ -115,17 +109,18 @@ export default function EditorPage() {
           </button>
         </div>
         <div className="flex items-center gap-2 md:gap-4 flex-1 justify-end">
-          <div className="hidden lg:flex items-center bg-secondary/50 rounded-md p-1 gap-1">
-             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSimulationSpeed(0.5)}>
-               <Rewind className={cn("w-3.5 h-3.5", simulationSpeed === 0.5 && "text-[#F38020]")} />
-             </Button>
-             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSimulationSpeed(1.0)}>
-               <Play className={cn("w-3.5 h-3.5", simulationSpeed === 1.0 && "text-[#F38020]")} />
-             </Button>
-             <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSimulationSpeed(2.0)}>
-               <FastForward className={cn("w-3.5 h-3.5", simulationSpeed === 2.0 && "text-[#F38020]")} />
-             </Button>
-          </div>
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleAnimation}
+            className={cn(
+              "rounded-full font-black text-[10px] uppercase gap-2 border-2 px-4 transition-all h-9",
+              isAnimating ? "bg-green-50 text-green-700 border-green-200" : "bg-gray-50 text-gray-500 border-gray-200"
+            )}
+          >
+            {isAnimating ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current" />}
+            {isAnimating ? "Simulation On" : "Simulation Paused"}
+          </Button>
           <TransformationInsights />
         </div>
       </header>
@@ -140,9 +135,9 @@ export default function EditorPage() {
           <Button
             onClick={handleSave}
             disabled={isLoading}
-            className="fixed bottom-6 right-6 z-40 bg-[#F38020] hover:bg-[#D14615] text-white font-bold h-14 px-8 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 group"
+            className="fixed bottom-6 right-6 z-40 bg-[#F38020] hover:bg-[#D14615] text-white font-bold h-14 px-8 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 group border-2 border-white"
           >
-            <Save className={cn("w-5 h-5 mr-2", isLoading && "animate-spin")} /> 
+            <Save className={cn("w-5 h-5 mr-2", isLoading && "animate-spin")} />
             <span>{isLoading ? "Saving..." : "Save Canvas"}</span>
           </Button>
         </ReactFlowProvider>

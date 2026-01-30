@@ -24,19 +24,20 @@ export const SketchyEdge = memo(({
     targetPosition,
   });
   const mode = useEditorStore(s => s.mode);
-  const simulationSpeed = useEditorStore(s => s.simulationSpeed);
+  const isAnimating = useEditorStore(s => s.isAnimating);
   const selectedEdgeId = useEditorStore(s => s.selectedEdgeId);
-  const hoveredPathEdgeIds = useEditorStore(useShallow(s => s.hoveredPathEdgeIds));
+  const activePathEdgeIds = useEditorStore(useShallow(s => s.activePathEdgeIds));
   const isSelected = selectedEdgeId === id;
-  const isInPath = hoveredPathEdgeIds.includes(id);
-  const weight = Number(data?.weight) || 1;
+  const isActivePath = activePathEdgeIds.includes(id);
+  const weight = Number(data?.weight) || 15;
   const label = data?.label as string;
+  // Arrow duration based on latency weight and distance
+  // Higher latency = Slower animation
   const duration = useMemo(() => {
-    const base = mode === 'legacy' ? (2 + weight) : 0.8;
-    return base / Math.max(0.1, simulationSpeed);
-  }, [mode, simulationSpeed, weight]);
-  const strokeWidth = mode === 'future' ? 3 : (1 + weight);
-  const isHighlighted = isSelected || isInPath;
+    return Math.max(1, weight / 10);
+  }, [weight]);
+  const strokeWidth = mode === 'future' ? 3 : 2;
+  const isHighlighted = isSelected || isActivePath;
   return (
     <>
       <BaseEdge
@@ -46,42 +47,47 @@ export const SketchyEdge = memo(({
           ...style,
           strokeWidth: isHighlighted ? strokeWidth + 2 : strokeWidth,
           stroke: isHighlighted ? '#F38020' : (mode === 'future' ? '#F38020' : '#2D2D2D'),
-          opacity: isHighlighted ? 1 : (mode === 'future' ? 0.8 : 0.6),
+          opacity: isHighlighted ? 1 : 0.4,
         }}
         className="wobbly-line transition-all duration-300"
       />
       <EdgeLabelRenderer>
-        {(label || weight > 1) && (
+        {(label || weight > 0) && (
           <div
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
               pointerEvents: 'none',
             }}
-            className="px-2 py-1 bg-white/80 border border-border rounded text-[10px] font-bold shadow-sm backdrop-blur-sm z-10"
+            className="px-2 py-1 bg-white/90 border-2 border-[#2D2D2D] rounded text-[9px] font-black shadow-sm backdrop-blur-sm z-10 uppercase italic"
           >
-            {label && <span className="block">{label}</span>}
-            <span className="text-muted-foreground uppercase">{weight * 15}ms</span>
+            {label && <span className="block border-b border-[#2D2D2D]/20 mb-0.5">{label}</span>}
+            <span className="text-[#F38020]">{weight}ms</span>
           </div>
         )}
       </EdgeLabelRenderer>
-      <motion.circle
-        key={`packet-${id}-${edgePath}`}
-        r={isHighlighted ? "5" : (mode === 'future' ? "4" : String(2 + (weight / 2)))}
-        fill={isHighlighted ? '#F38020' : (mode === 'future' ? '#F38020' : '#2D2D2D')}
-        className={isHighlighted ? "packet-glow animate-pulse" : "packet-glow"}
-        initial={{ offsetDistance: "0%" }}
-        animate={{ offsetDistance: "100%" }}
-        transition={{
-          duration: duration,
-          repeat: Infinity,
-          ease: "linear",
-        }}
-        style={{
-          offsetPath: `path('${edgePath}')`,
-          offsetRotate: "auto",
-        }}
-      />
+      {isAnimating && isActivePath && (
+        <motion.g
+          initial={{ offsetDistance: "0%" }}
+          animate={{ offsetDistance: "100%" }}
+          transition={{
+            duration: duration,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+          style={{
+            offsetPath: `path('${edgePath}')`,
+            offsetRotate: "auto",
+          }}
+        >
+          {/* Thick Path-based Arrow Head */}
+          <path
+            d="M -8 -6 L 8 0 L -8 6 Z"
+            fill="#F38020"
+            className="packet-glow"
+          />
+        </motion.g>
+      )}
     </>
   );
 });

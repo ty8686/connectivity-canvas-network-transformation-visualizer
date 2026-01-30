@@ -3,8 +3,9 @@ import { useEditorStore } from '@/store/editor-store';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useShallow } from 'zustand/react/shallow';
-import { Shield, Server, Database, Users, Layers, Cloud, HardDrive, Trash2, X } from 'lucide-react';
+import { Shield, Server, Database, Users, Layers, Cloud, HardDrive, Trash2, X, PlayCircle, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 const ICON_OPTIONS = [
   { type: 'users', icon: Users },
@@ -27,7 +28,7 @@ export function NodeInspector() {
     <div className="absolute top-24 right-8 z-20 w-80 bg-white border-2 border-[#2D2D2D] p-6 shadow-[8px_8px_0px_#2D2D2D] rounded-xl animate-in fade-in slide-in-from-right-6 duration-300 font-sans text-[#2D2D2D]">
       <div className="flex justify-between items-center mb-6">
         <div>
-          <h3 className="text-xl font-black tracking-tight text-[#2D2D2D] uppercase italic">Inspector</h3>
+          <h3 className="text-xl font-black tracking-tight text-[#2D2D2D] uppercase italic">Edit Node</h3>
           <p className="text-[10px] text-[#2D2D2D] opacity-60 font-mono font-bold">UID: {node.id.slice(0, 12)}</p>
         </div>
         <Button variant="ghost" size="icon" onClick={() => setSelectedNodeId(null)} className="h-8 w-8 rounded-full hover:bg-secondary">
@@ -43,6 +44,33 @@ export function NodeInspector() {
             onChange={(e) => updateNodeData(node.id, { label: e.target.value })}
             className="rounded-md border-2 border-[#2D2D2D] h-10 focus-visible:ring-[#F38020] transition-shadow bg-secondary/20 text-[#2D2D2D] font-bold"
           />
+        </div>
+        <div className="space-y-3 p-3 border-2 border-[#2D2D2D] rounded-lg bg-gray-50/50">
+          <Label className="text-[10px] uppercase font-black tracking-widest text-[#2D2D2D] opacity-80 px-1">Traffic Roles</Label>
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="isTrafficStart" 
+                checked={!!node.data.isTrafficStart}
+                onCheckedChange={(val) => updateNodeData(node.id, { isTrafficStart: !!val })}
+                className="border-2 border-[#2D2D2D] data-[state=checked]:bg-[#F38020] data-[state=checked]:border-[#F38020]"
+              />
+              <label htmlFor="isTrafficStart" className="text-sm font-bold flex items-center gap-2 cursor-pointer">
+                <PlayCircle className="w-4 h-4 text-blue-500" /> Traffic Start
+              </label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="isTrafficEnd" 
+                checked={!!node.data.isTrafficEnd}
+                onCheckedChange={(val) => updateNodeData(node.id, { isTrafficEnd: !!val })}
+                className="border-2 border-[#2D2D2D] data-[state=checked]:bg-[#F38020] data-[state=checked]:border-[#F38020]"
+              />
+              <label htmlFor="isTrafficEnd" className="text-sm font-bold flex items-center gap-2 cursor-pointer">
+                <Flag className="w-4 h-4 text-red-500" /> Traffic End
+              </label>
+            </div>
+          </div>
         </div>
         <div className="space-y-2.5">
           <Label className="text-[10px] uppercase font-black tracking-widest text-[#2D2D2D] opacity-80 px-1">Visual Icon</Label>
