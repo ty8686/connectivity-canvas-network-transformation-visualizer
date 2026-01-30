@@ -135,7 +135,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       .map(u => findShortestPath(nodes, edges, u.id, endNodeIds))
       .filter(Boolean) as any[];
     if (paths.length === 0) {
-      set({ activePathNodeIds: [], activePathEdgeIds: [], latencyDelta: 0, hopsDelta: 0 });
+      set({
+        activePathNodeIds: [],
+        activePathEdgeIds: [],
+        latencyDelta: 0,
+        hopsDelta: 0,
+        latency: mode === 'future' ? 12 : 240,
+        hops: mode === 'future' ? 1 : 4
+      });
       return;
     }
     const allNodeIds = new Set<string>();
@@ -150,7 +157,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     });
     const avgLatency = totalLatency / paths.length;
     const avgHops = totalHops / paths.length;
-    // Baseline comparison (Legacy Default ~240ms)
     const legacyBaselineLatency = 240;
     const lDelta = Math.max(-99, Math.round(((legacyBaselineLatency - avgLatency) / legacyBaselineLatency) * 100));
     const hDelta = Math.round((4 / Math.max(1, avgHops)) * 10) / 10;
@@ -293,7 +299,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     }
   },
   saveProject: async () => {
-    const { projectId, projectTitle, nodes, edges, latency, hops } = get();
+    const { projectId, projectTitle, nodes, edges, latency, hops, mode } = get();
     set({ isLoading: true });
     try {
       const result = await api<Project>('/api/projects', {
@@ -303,7 +309,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           title: projectTitle,
           nodes,
           edges,
-          metadata: { latency, hops, updatedAt: Date.now() }
+          metadata: { latency, hops, mode, updatedAt: Date.now() }
         })
       });
       set({ projectId: result.id, isLoading: false });
@@ -324,7 +330,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         edges: project.edges,
         latency: project.metadata.latency,
         hops: project.metadata.hops,
-        mode: project.metadata.hops > 2 ? 'legacy' : 'future',
+        mode: project.metadata.mode || 'legacy',
         isLoading: false,
         legacyBackup: null
       });

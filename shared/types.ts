@@ -22,6 +22,7 @@ export interface ProjectMetadata {
   latency: number;
   hops: number;
   updatedAt: number;
+  mode: 'legacy' | 'future';
 }
 export interface Project {
   id: string;
