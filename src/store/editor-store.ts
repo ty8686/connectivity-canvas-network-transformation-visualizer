@@ -51,6 +51,7 @@ interface EditorState {
   createNewProject: () => void;
   calculateMetrics: () => void;
 }
+const ORIGIN_TYPES = ['database', 'server', 'harddrive'];
 function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, targetIconTypes: string[]): PreviewMetrics | null {
   if (!nodes || !edges || !startNodeId) return null;
   const adjacency: Record<string, { to: string; weight: number; edgeId: string }[]> = {};
@@ -124,10 +125,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   previewMetrics: null,
   calculateMetrics: () => {
     const { nodes, edges, mode, hoveredNodeId } = get();
-    const targetIcons = ['database', 'server', 'harddrive'];
     const userNodes = nodes.filter(n => n.data?.iconType === 'users');
     const paths = userNodes
-      .map(u => findShortestPath(nodes, edges, u.id, targetIcons))
+      .map(u => findShortestPath(nodes, edges, u.id, ORIGIN_TYPES))
       .filter(Boolean) as PreviewMetrics[];
     const avgLatency = paths.length > 0
       ? paths.reduce((acc, p) => acc + p.latency, 0) / paths.length
@@ -141,21 +141,19 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (hoveredNodeId) {
       const node = nodes.find(n => n.id === hoveredNodeId);
       if (node?.data?.iconType === 'users') {
-        preview = findShortestPath(nodes, edges, hoveredNodeId, targetIcons);
-        if (preview) {
-          pathNodeIds = preview.nodeIds;
-          pathEdgeIds = preview.edgeIds;
-        }
-      } else if (node && targetIcons.includes(String(node.data?.iconType))) {
+        preview = findShortestPath(nodes, edges, hoveredNodeId, ORIGIN_TYPES);
+      } else if (node && ORIGIN_TYPES.includes(String(node.data?.iconType))) {
         for (const u of userNodes) {
           const p = findShortestPath(nodes, edges, u.id, [String(node.data?.iconType)]);
           if (p && p.nodeIds.includes(node.id)) {
-             pathNodeIds = p.nodeIds;
-             pathEdgeIds = p.edgeIds;
-             preview = p;
-             break;
+            preview = p;
+            break;
           }
         }
+      }
+      if (preview) {
+        pathNodeIds = preview.nodeIds;
+        pathEdgeIds = preview.edgeIds;
       }
     }
     const legacyBaselineLatency = 240;
@@ -179,13 +177,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const state = get();
     if (mode === state.mode) return;
     if (mode === 'future') {
+      // Save exact current state before transforming
       set({ legacyBackup: { nodes: [...state.nodes], edges: [...state.edges] } });
-      const originNodes = state.nodes.filter(n => ['database', 'server', 'harddrive'].includes(String(n.data?.iconType)));
+      const originNodes = state.nodes.filter(n => ORIGIN_TYPES.includes(String(n.data?.iconType)));
       const userNodes = state.nodes.filter(n => n.data?.iconType === 'users');
+      // Calculate central position for CF Edge
+      const avgX = state.nodes.reduce((acc, n) => acc + n.position.x, 0) / Math.max(1, state.nodes.length);
+      const avgY = state.nodes.reduce((acc, n) => acc + n.position.y, 0) / Math.max(1, state.nodes.length);
       const cfNode: Node = {
         id: 'cf-edge-auto',
         type: 'sketchy',
-        position: { x: 400, y: 150 },
+        position: { x: avgX, y: avgY },
         data: { label: 'Cloudflare Connectivity Cloud', iconType: 'cloud', isPrimary: true }
       };
       const newNodes = [...userNodes, cfNode, ...originNodes];
