@@ -1,6 +1,6 @@
 # Cloudflare Workers Full-Stack Chat Demo
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/ty8686/connectivity-canvas-network-transformation-visualizer)
 
 A production-ready, full-stack chat application demonstrating Cloudflare Workers, Durable Objects for stateful storage, Hono routing, and a modern React frontend with shadcn/ui. Features users, chat boards, and real-time messaging with indexed listing, all powered by a single Durable Object class for multi-entity storage.
 
@@ -107,7 +107,7 @@ Or manually:
 - Custom Domain: Update `wrangler.jsonc` or use `wrangler deploy --name your-name`.
 - Preview: `wrangler deploy --name preview-your-name`.
 
-[cloudflarebutton]
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/ty8686/connectivity-canvas-network-transformation-visualizer)
 
 ## 🤝 Contributing
 
