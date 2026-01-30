@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Home, Save, Play, Pause, Zap, Activity } from 'lucide-react';
+import { ChevronRight, Home, Save, Play, Pause, Zap, Activity, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FlowCanvas } from '@/components/diagram/FlowCanvas';
 import { ComponentToolbox } from '@/components/diagram/ComponentToolbox';
@@ -41,7 +41,7 @@ export default function EditorPage() {
     }
     try {
       await saveProject();
-      toast.success("Architecture design saved");
+      toast.success("Architecture design synchronized");
     } catch (err) {
       toast.error("Failed to sync project state");
     }
@@ -56,16 +56,20 @@ export default function EditorPage() {
               <Home className="w-4 h-4" />
             </Link>
             <ChevronRight className="w-3 h-3 opacity-30" />
-            <input
-              value={projectTitle}
-              onChange={(e) => setProjectTitle(e.target.value)}
-              className="font-black text-xs uppercase tracking-widest text-[#2D2D2D] bg-transparent border-none focus:ring-0 p-0 hover:bg-slate-100 rounded px-2 py-1 transition-colors w-32 md:w-56 overflow-hidden text-ellipsis whitespace-nowrap italic"
-              placeholder="Design Title..."
-            />
+            <div className="relative group max-w-[120px] md:max-w-[200px]">
+              <input
+                value={projectTitle}
+                onChange={(e) => setProjectTitle(e.target.value)}
+                className="font-black text-xs uppercase tracking-widest text-[#2D2D2D] bg-transparent border-none focus:ring-2 focus:ring-[#F38020]/20 p-0 hover:bg-slate-50 rounded px-2 py-1 transition-all w-full overflow-hidden text-ellipsis whitespace-nowrap italic"
+                placeholder="Design Title..."
+              />
+            </div>
           </div>
-          <div className="hidden sm:flex items-center bg-slate-50 border-2 border-slate-100 rounded-lg px-3 py-1 gap-4">
-            <div className="flex flex-col">
-              <span className="text-[7px] font-black uppercase text-muted-foreground leading-none">Latency Baseline</span>
+          <div className="hidden lg:flex items-center bg-slate-50 border-2 border-slate-100 rounded-lg px-3 py-1 gap-4 shadow-inner">
+            <div className="flex flex-col cursor-help" title="Avg. time for packets to traverse the active paths">
+              <span className="text-[7px] font-black uppercase text-muted-foreground leading-none flex items-center gap-1">
+                Latency Baseline <Info className="w-2 h-2 opacity-50" />
+              </span>
               <span className={cn("text-xs font-black tracking-tight", mode === 'future' ? "text-green-600" : "text-[#2D2D2D]")}>
                 {displayLatency}
               </span>
@@ -77,7 +81,7 @@ export default function EditorPage() {
             </div>
           </div>
         </div>
-        <div className="flex items-center bg-slate-100 p-1 rounded-full border-2 border-slate-200 w-[240px] md:w-[320px] relative shadow-inner shrink-0">
+        <div className="flex items-center bg-slate-100 p-1 rounded-full border-2 border-slate-200 w-[220px] md:w-[280px] relative shadow-inner shrink-0">
           <button
             onClick={() => setMode('legacy')}
             className={cn(
@@ -105,12 +109,12 @@ export default function EditorPage() {
             size="sm"
             onClick={toggleAnimation}
             className={cn(
-              "rounded-full font-black text-[9px] uppercase gap-2 border-2 px-4 transition-all h-9 active:scale-95",
+              "rounded-full font-black text-[9px] uppercase gap-2 border-2 px-4 transition-all h-9 active:scale-95 hidden md:flex",
               isAnimating ? "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm" : "bg-slate-50 text-slate-500 border-slate-200"
             )}
           >
             {isAnimating ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current" />}
-            {isAnimating ? "Active Flow" : "Flow Paused"}
+            {isAnimating ? "Flow Active" : "Flow Paused"}
           </Button>
           <TransformationInsights />
         </div>
@@ -123,14 +127,21 @@ export default function EditorPage() {
           <ComponentToolbox />
           {selectedNodeId && <NodeInspector />}
           {selectedEdgeId && <EdgeInspector />}
-          <Button
-            onClick={handleSave}
-            disabled={isLoading || nodes.length === 0}
-            className="fixed bottom-8 right-8 z-40 bg-[#F38020] hover:bg-[#D14615] text-white font-black h-14 px-10 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 border-4 border-white"
-          >
-            <Save className={cn("w-5 h-5 mr-3", isLoading && "animate-spin")} />
-            <span>{isLoading ? "SAVING WORK..." : "SYNC TO CLOUD"}</span>
-          </Button>
+          <div className="fixed bottom-8 right-8 z-40">
+            <Button
+              onClick={handleSave}
+              disabled={isLoading || nodes.length === 0}
+              className={cn(
+                "bg-[#F38020] hover:bg-[#D14615] text-white font-black h-14 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 border-4 border-white",
+                isLoading ? "px-12" : "px-10"
+              )}
+            >
+              <Save className={cn("w-5 h-5 mr-3 transition-transform", isLoading && "animate-spin")} />
+              <span className="tracking-tight uppercase">
+                {isLoading ? "SYNCING..." : "SYNC TO CLOUD"}
+              </span>
+            </Button>
+          </div>
         </ReactFlowProvider>
       </main>
     </div>

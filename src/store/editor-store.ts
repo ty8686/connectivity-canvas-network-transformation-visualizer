@@ -56,7 +56,9 @@ function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, end
   const pq: [string, number][] = [[startNodeId, 0]];
   while (pq.length > 0) {
     pq.sort((a, b) => a[1] - b[1]);
-    const [u, d] = pq.shift()!;
+    const nextItem = pq.shift();
+    if (!nextItem) break;
+    const [u, d] = nextItem;
     if (visited.has(u)) continue;
     visited.add(u);
     if (endNodeIds.includes(u)) {
@@ -113,16 +115,17 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const { nodes, edges, mode, hoveredNodeId } = get();
     const endNodeIds = nodes.filter(n => !!n.data?.isTrafficEnd).map(n => n.id);
     const trafficStartNodes = nodes.filter(n => !!n.data?.isTrafficStart);
-    // Include hovered node as a start point to preview its path
     const startPoints = [...trafficStartNodes];
     if (hoveredNodeId && !trafficStartNodes.some(n => n.id === hoveredNodeId)) {
       const hoveredNode = nodes.find(n => n.id === hoveredNodeId);
       if (hoveredNode) startPoints.push(hoveredNode);
     }
     if (startPoints.length === 0 || endNodeIds.length === 0) {
-      set({ 
-        latency: mode === 'future' ? 12 : 240, 
+      set({
+        latency: mode === 'future' ? 12 : 240,
         hops: mode === 'future' ? 1 : 4,
+        latencyDelta: 0,
+        hopsDelta: 0,
         activePathNodeIds: [],
         activePathEdgeIds: []
       });
@@ -131,6 +134,10 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const paths = startPoints
       .map(u => findShortestPath(nodes, edges, u.id, endNodeIds))
       .filter(Boolean) as any[];
+    if (paths.length === 0) {
+      set({ activePathNodeIds: [], activePathEdgeIds: [], latencyDelta: 0, hopsDelta: 0 });
+      return;
+    }
     const allNodeIds = new Set<string>();
     const allEdgeIds = new Set<string>();
     let totalLatency = 0;
@@ -141,11 +148,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       totalLatency += p.latency;
       totalHops += p.hops;
     });
-    const avgLatency = paths.length > 0 ? totalLatency / paths.length : (mode === 'future' ? 12 : 240);
-    const avgHops = paths.length > 0 ? totalHops / paths.length : (mode === 'future' ? 1 : 4);
-    // ROI calculation: Compared to a static baseline of 240ms (Legacy default)
+    const avgLatency = totalLatency / paths.length;
+    const avgHops = totalHops / paths.length;
+    // Baseline comparison (Legacy Default ~240ms)
     const legacyBaselineLatency = 240;
-    const lDelta = Math.round(((legacyBaselineLatency - avgLatency) / legacyBaselineLatency) * 100);
+    const lDelta = Math.max(-99, Math.round(((legacyBaselineLatency - avgLatency) / legacyBaselineLatency) * 100));
     const hDelta = Math.round((4 / Math.max(1, avgHops)) * 10) / 10;
     set({
       latency: avgLatency,
@@ -160,10 +167,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const state = get();
     if (mode === state.mode) return;
     if (mode === 'future') {
-      // Create backup before transformation
       set({ legacyBackup: { nodes: [...state.nodes], edges: [...state.edges] } });
       const userNodes = state.nodes.filter(n => n.data?.isTrafficStart);
-      const originNodes = state.nodes.filter(n => n.data?.iconType === 'database' || n.data?.iconType === 'server');
+      const originNodes = state.nodes.filter(n => n.data?.iconType === 'database' || n.data?.iconType === 'server' || n.data?.isTrafficEnd);
       const avgX = state.nodes.reduce((acc, n) => acc + n.position.x, 0) / Math.max(1, state.nodes.length);
       const avgY = state.nodes.reduce((acc, n) => acc + n.position.y, 0) / Math.max(1, state.nodes.length);
       const cfNode: Node = {
@@ -190,7 +196,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           target: cfNode.id,
           type: 'sketchy',
           animated: true,
-          data: { weight: 10, label: 'Optimized Edge' },
+          data: { weight: 12, label: 'Global Edge' },
           style: { stroke: '#F48120', strokeWidth: 3 }
         });
       });

@@ -31,10 +31,12 @@ export const SketchyEdge = memo(({
   const isActivePath = activePathEdgeIds.includes(id);
   const weight = Number(data?.weight) || 15;
   const label = data?.label as string;
-  // Path animation duration
-  // Normalize: 1ms -> 0.5s, 1000ms -> 5.0s
+  // FORMULA: 1.0s base + (0.005 * weight)
+  // 1ms -> 1.005s
+  // 200ms -> 2.0s
+  // 1000ms -> 6.0s
   const duration = useMemo(() => {
-    return Math.max(0.5, (weight / 200) + 0.4);
+    return 1.0 + (0.005 * weight);
   }, [weight]);
   const strokeWidth = mode === 'future' ? 4 : 2;
   const isHighlighted = isSelected || isActivePath;
@@ -82,12 +84,14 @@ export const SketchyEdge = memo(({
             offsetRotate: "auto",
           }}
         >
-          {/* Robust Arrow Head Path */}
+          {/* Robust Arrow Head Path with high-contrast outline */}
           <path
             d="M -10 -7 L 10 0 L -10 7 Z"
             fill="#F38020"
-            className="packet-glow shadow-xl"
-            style={{ filter: 'drop-shadow(0 0 6px rgba(243, 128, 32, 0.8))' }}
+            stroke="#FFFFFF"
+            strokeWidth="1.5"
+            className="packet-glow"
+            style={{ filter: 'drop-shadow(0 0 8px rgba(243, 128, 32, 0.9))' }}
           />
         </motion.g>
       )}
