@@ -1,10 +1,15 @@
-import React, { useCallback, useRef, useMemo } from 'react';
+import React, { useCallback, useRef } from 'react';
 import { ReactFlow, Controls, NodeTypes, EdgeTypes, useReactFlow, DefaultEdgeOptions } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEditorStore } from '@/store/editor-store';
 import { SketchyNode } from './node-types';
 import { SketchyEdge } from './edge-types';
 import { useShallow } from 'zustand/react/shallow';
+/**
+ * IMPORTANT: These configuration objects MUST remain outside the component scope.
+ * Moving them inside will cause React Flow to re-initialize on every render,
+ * leading to performance degradation and console warnings.
+ */
 const nodeTypes: NodeTypes = {
   sketchy: SketchyNode,
 };

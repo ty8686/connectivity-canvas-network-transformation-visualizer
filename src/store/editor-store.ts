@@ -168,7 +168,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       const pathDurations = p.edgeIds.map((edgeId: string) => {
         const edge = edges.find(e => e.id === edgeId);
         const weight = Number(edge?.data?.weight) || 15;
-        return 1.0 + (0.005 * weight);
+        return 0.8 + (0.006 * weight);
       });
       const totalPathDuration = pathDurations.reduce((a: number, b: number) => a + b, 0);
       p.edgeIds.forEach((edgeId: string, idx: number) => {
