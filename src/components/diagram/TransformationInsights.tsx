@@ -36,7 +36,7 @@ export function TransformationInsights() {
               Infrastructure ROI Analysis
             </DialogTitle>
             <DialogDescription className="text-muted-foreground text-sm pt-2 font-medium">
-              Real-time comparison between your current architecture and the Cloudflare Connectivity Cloud. Canvas packet speeds are calibrated to represent these latency values.
+              Real-time comparison between your current architecture and the Cloudflare Connectivity Cloud. Canvas packet flow is now sequential, reflecting hop-by-hop latency.
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -114,7 +114,7 @@ export function TransformationInsights() {
           </div>
           <div className="flex justify-between items-center pt-2 gap-4">
             <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest max-w-[320px] italic leading-tight">
-              * Delta metrics are calculated against a standardized 240ms legacy hardware baseline. Canvas flow speed is scaled 1:1 with these latency values.
+              * Delta metrics are calculated against a standardized 240ms baseline. Canvas flow speed is now sequential, scaled 1:1 with these latency values.
             </p>
             <DialogClose asChild>
               <Button className="bg-[#F38020] hover:bg-[#D14615] text-white font-black h-12 px-10 rounded-md shadow-lg transition-all active:scale-95 shrink-0">

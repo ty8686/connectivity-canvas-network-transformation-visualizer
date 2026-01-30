@@ -4,12 +4,18 @@ import { DEMO_LEGACY_GRAPH } from '@/lib/demo-data';
 import { api } from '@/lib/api-client';
 import type { Project } from '@shared/types';
 export type ViewMode = 'legacy' | 'future';
+export interface EdgeAnimationTiming {
+  delay: number;
+  duration: number;
+  totalPathDuration: number;
+}
 interface EditorState {
   projectId: string | null;
   projectTitle: string;
   mode: ViewMode;
   nodes: Node[];
   edges: Edge[];
+  edgeAnimations: Record<string, EdgeAnimationTiming[]>;
   legacyBackup: { nodes: Node[]; edges: Edge[] } | null;
   projects: Project[];
   selectedNodeId: string | null;
@@ -97,6 +103,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   mode: 'legacy',
   nodes: DEMO_LEGACY_GRAPH.nodes,
   edges: DEMO_LEGACY_GRAPH.edges,
+  edgeAnimations: {},
   legacyBackup: null,
   projects: [],
   selectedNodeId: null,
@@ -127,7 +134,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         latencyDelta: 0,
         hopsDelta: 0,
         activePathNodeIds: [],
-        activePathEdgeIds: []
+        activePathEdgeIds: [],
+        edgeAnimations: {}
       });
       return;
     }
@@ -138,6 +146,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       set({
         activePathNodeIds: [],
         activePathEdgeIds: [],
+        edgeAnimations: {},
         latencyDelta: 0,
         hopsDelta: 0,
         latency: mode === 'future' ? 12 : 240,
@@ -147,6 +156,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     }
     const allNodeIds = new Set<string>();
     const allEdgeIds = new Set<string>();
+    const edgeAnimations: Record<string, EdgeAnimationTiming[]> = {};
     let totalLatency = 0;
     let totalHops = 0;
     paths.forEach(p => {
@@ -154,6 +164,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       p.edgeIds.forEach((id: string) => allEdgeIds.add(id));
       totalLatency += p.latency;
       totalHops += p.hops;
+      let cumulativeDuration = 0;
+      const pathDurations = p.edgeIds.map((edgeId: string) => {
+        const edge = edges.find(e => e.id === edgeId);
+        const weight = Number(edge?.data?.weight) || 15;
+        return 1.0 + (0.005 * weight);
+      });
+      const totalPathDuration = pathDurations.reduce((a: number, b: number) => a + b, 0);
+      p.edgeIds.forEach((edgeId: string, idx: number) => {
+        const duration = pathDurations[idx];
+        if (!edgeAnimations[edgeId]) edgeAnimations[edgeId] = [];
+        edgeAnimations[edgeId].push({
+          delay: cumulativeDuration,
+          duration: duration,
+          totalPathDuration: totalPathDuration
+        });
+        cumulativeDuration += duration;
+      });
     });
     const avgLatency = totalLatency / paths.length;
     const avgHops = totalHops / paths.length;
@@ -166,7 +193,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       latencyDelta: lDelta,
       hopsDelta: hDelta,
       activePathNodeIds: Array.from(allNodeIds),
-      activePathEdgeIds: Array.from(allEdgeIds)
+      activePathEdgeIds: Array.from(allEdgeIds),
+      edgeAnimations
     });
   },
   setMode: (mode) => {
@@ -355,6 +383,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       mode: 'legacy',
       nodes: DEMO_LEGACY_GRAPH.nodes,
       edges: DEMO_LEGACY_GRAPH.edges,
+      edgeAnimations: {},
       legacyBackup: null,
       selectedNodeId: null,
       selectedEdgeId: null,

@@ -1,4 +1,4 @@
-import React, { useMemo, memo } from 'react';
+import React, { memo } from 'react';
 import { BaseEdge, EdgeProps, getBezierPath, EdgeLabelRenderer } from '@xyflow/react';
 import { motion } from 'framer-motion';
 import { useEditorStore } from '@/store/editor-store';
@@ -27,17 +27,11 @@ export const SketchyEdge = memo(({
   const isAnimating = useEditorStore(s => s.isAnimating);
   const selectedEdgeId = useEditorStore(s => s.selectedEdgeId);
   const activePathEdgeIds = useEditorStore(useShallow(s => s.activePathEdgeIds));
+  const edgeAnimations = useEditorStore(useShallow(s => s.edgeAnimations[id] || []));
   const isSelected = selectedEdgeId === id;
   const isActivePath = activePathEdgeIds.includes(id);
   const weight = Number(data?.weight) || 15;
   const label = data?.label as string;
-  // FORMULA: 1.0s base + (0.005 * weight)
-  // 1ms -> 1.005s
-  // 200ms -> 2.0s
-  // 1000ms -> 6.0s
-  const duration = useMemo(() => {
-    return 1.0 + (0.005 * weight);
-  }, [weight]);
   const strokeWidth = mode === 'future' ? 4 : 2;
   const isHighlighted = isSelected || isActivePath;
   const activeColor = mode === 'future' ? '#F38020' : '#2D2D2D';
@@ -70,21 +64,27 @@ export const SketchyEdge = memo(({
           </div>
         )}
       </EdgeLabelRenderer>
-      {isAnimating && isActivePath && (
+      {isAnimating && isActivePath && edgeAnimations.map((timing, idx) => (
         <motion.g
-          initial={{ offsetDistance: "0%" }}
-          animate={{ offsetDistance: "100%" }}
+          key={`${id}-anim-${idx}`}
+          initial={{ offsetDistance: "0%", opacity: 0 }}
+          animate={{ 
+            offsetDistance: "100%",
+            opacity: [0, 1, 1, 0] // Fade in/out at start/end of the segment
+          }}
           transition={{
-            duration: duration,
+            duration: timing.duration,
+            delay: timing.delay,
             repeat: Infinity,
+            repeatDelay: timing.totalPathDuration - timing.duration,
             ease: "linear",
+            times: [0, 0.1, 0.9, 1]
           }}
           style={{
             offsetPath: `path('${edgePath}')`,
             offsetRotate: "auto",
           }}
         >
-          {/* Robust Arrow Head Path with high-contrast outline */}
           <path
             d="M -10 -7 L 10 0 L -10 7 Z"
             fill="#F38020"
@@ -94,7 +94,7 @@ export const SketchyEdge = memo(({
             style={{ filter: 'drop-shadow(0 0 8px rgba(243, 128, 32, 0.9))' }}
           />
         </motion.g>
-      )}
+      ))}
     </>
   );
 });

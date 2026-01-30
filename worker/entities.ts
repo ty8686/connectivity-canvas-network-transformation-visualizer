@@ -35,7 +35,7 @@ export class ProjectEntity extends IndexedEntity<Project> {
     title: "Untitled Project",
     nodes: [],
     edges: [],
-    metadata: { latency: 0, hops: 0, updatedAt: Date.now() }
+    metadata: { latency: 0, hops: 0, updatedAt: Date.now(), mode: 'legacy' }
   };
   static seedData: Project[] = [
     {
@@ -52,7 +52,7 @@ export class ProjectEntity extends IndexedEntity<Project> {
         { id: 'e2-3', source: 'fw-1', target: 'lb-1', type: 'sketchy', animated: true },
         { id: 'e3-4', source: 'lb-1', target: 'app-1', type: 'sketchy', animated: true },
       ],
-      metadata: { latency: 240, hops: 4, updatedAt: Date.now() }
+      metadata: { latency: 240, hops: 4, updatedAt: Date.now(), mode: 'legacy' }
     }
   ];
 }
