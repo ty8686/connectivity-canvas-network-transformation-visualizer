@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
-import { ChevronRight, Home, Save, Rewind, Play, FastForward, Zap, Activity, Info } from 'lucide-react';
+import { ChevronRight, Home, Save, Rewind, Play, FastForward, Zap, Activity } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { FlowCanvas } from '@/components/diagram/FlowCanvas';
 import { ComponentToolbox } from '@/components/diagram/ComponentToolbox';
@@ -8,6 +8,7 @@ import { NodeInspector } from '@/components/diagram/NodeInspector';
 import { EdgeInspector } from '@/components/diagram/EdgeInspector';
 import { TransformationInsights } from '@/components/diagram/TransformationInsights';
 import { useEditorStore } from '@/store/editor-store';
+import { useShallow } from 'zustand/react/shallow';
 import { ReactFlowProvider } from '@xyflow/react';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -26,10 +27,9 @@ export default function EditorPage() {
   const isLoading = useEditorStore(s => s.isLoading);
   const selectedNodeId = useEditorStore(s => s.selectedNodeId);
   const selectedEdgeId = useEditorStore(s => s.selectedEdgeId);
-  const hoveredNodeId = useEditorStore(s => s.hoveredNodeId);
   const globalLatency = useEditorStore(s => s.latency);
   const globalHops = useEditorStore(s => s.hops);
-  const previewMetrics = useEditorStore(s => s.previewMetrics);
+  const previewMetrics = useEditorStore(useShallow(s => s.previewMetrics));
   useEffect(() => {
     if (projectIdParam) {
       loadProject(projectIdParam);

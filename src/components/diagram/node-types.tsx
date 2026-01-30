@@ -3,6 +3,7 @@ import { Handle, Position, NodeProps } from '@xyflow/react';
 import { Shield, Server, Database, Users, Layers, Cloud, HardDrive } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEditorStore } from '@/store/editor-store';
+import { useShallow } from 'zustand/react/shallow';
 const ICON_MAP = {
   shield: Shield,
   server: Server,
@@ -15,7 +16,7 @@ const ICON_MAP = {
 export const SketchyNode = memo(({ id, data }: NodeProps) => {
   const mode = useEditorStore(s => s.mode);
   const hoveredNodeId = useEditorStore(s => s.hoveredNodeId);
-  const hoveredPathNodeIds = useEditorStore(s => s.hoveredPathNodeIds);
+  const hoveredPathNodeIds = useEditorStore(useShallow(s => s.hoveredPathNodeIds));
   const Icon = ICON_MAP[data.iconType as keyof typeof ICON_MAP] || Server;
   const isPrimary = data.isPrimary as boolean;
   const isDirectHover = hoveredNodeId === id;

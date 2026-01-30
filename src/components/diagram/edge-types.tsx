@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, memo } from 'react';
 import { BaseEdge, EdgeProps, getBezierPath, EdgeLabelRenderer } from '@xyflow/react';
 import { motion } from 'framer-motion';
 import { useEditorStore } from '@/store/editor-store';
-export const SketchyEdge = ({
+import { useShallow } from 'zustand/react/shallow';
+export const SketchyEdge = memo(({
   id,
   sourceX,
   sourceY,
@@ -25,7 +26,7 @@ export const SketchyEdge = ({
   const mode = useEditorStore(s => s.mode);
   const simulationSpeed = useEditorStore(s => s.simulationSpeed);
   const selectedEdgeId = useEditorStore(s => s.selectedEdgeId);
-  const hoveredPathEdgeIds = useEditorStore(s => s.hoveredPathEdgeIds);
+  const hoveredPathEdgeIds = useEditorStore(useShallow(s => s.hoveredPathEdgeIds));
   const isSelected = selectedEdgeId === id;
   const isInPath = hoveredPathEdgeIds.includes(id);
   const weight = Number(data?.weight) || 1;
@@ -83,4 +84,5 @@ export const SketchyEdge = ({
       />
     </>
   );
-};
+});
+SketchyEdge.displayName = 'SketchyEdge';

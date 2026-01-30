@@ -52,8 +52,10 @@ interface EditorState {
   calculateMetrics: () => void;
 }
 function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, targetIconTypes: string[]): PreviewMetrics | null {
+  if (!nodes || !edges || !startNodeId) return null;
   const adjacency: Record<string, { to: string; weight: number; edgeId: string }[]> = {};
   edges.forEach(edge => {
+    if (!edge.source || !edge.target) return;
     if (!adjacency[edge.source]) adjacency[edge.source] = [];
     const weight = Number(edge.data?.weight) || 1;
     adjacency[edge.source].push({ to: edge.target, weight, edgeId: edge.id });
@@ -82,8 +84,8 @@ function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, tar
           curr = null;
         }
       }
-      return { 
-        latency: d * 15 + 10, 
+      return {
+        latency: d * 15 + 10,
         hops: nodePath.length - 1,
         nodeIds: nodePath,
         edgeIds: edgePath
@@ -145,7 +147,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
           pathEdgeIds = preview.edgeIds;
         }
       } else if (node && targetIcons.includes(String(node.data?.iconType))) {
-        // Find if any user can reach this specific target
         for (const u of userNodes) {
           const p = findShortestPath(nodes, edges, u.id, [String(node.data?.iconType)]);
           if (p && p.nodeIds.includes(node.id)) {
@@ -351,7 +352,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       latencyDelta: 0,
       hopsDelta: 0,
       hoveredPathNodeIds: [],
-      hoveredPathEdgeIds: []
+      hoveredPathEdgeIds: [],
+      previewMetrics: null
     });
   }
 }));
