@@ -4,7 +4,7 @@
  */
  {
 	"$schema": "node_modules/wrangler/config-schema.json",
-	"name": "connectivity-canvas-rmnrkebpe10rl-hrrmti_",
+	"name": "network-transformation-visualizer",
 	"main": "worker/index.ts",
 	"compatibility_date": "2025-04-24",
 	"assets": {
