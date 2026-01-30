@@ -4,6 +4,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
   DialogClose
 } from '@/components/ui/dialog';
@@ -17,7 +18,7 @@ export function TransformationInsights() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" className="gap-2 rounded-md font-bold shadow-sm h-10 border-border bg-white hover:bg-orange-50 hover:border-orange-200 transition-all">
+        <Button variant="outline" className="gap-2 rounded-md font-bold shadow-sm h-10 border-border bg-white hover:bg-orange-50 hover:border-orange-200 transition-all text-[#F38020]">
           <Info className="w-4 h-4 text-[#F38020]" />
           {mode === 'future' ? 'Transformation ROI' : 'Explore Benefits'}
         </Button>
@@ -26,9 +27,12 @@ export function TransformationInsights() {
         <div className="p-8 space-y-8 bg-white">
           <DialogHeader>
             <DialogTitle className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
-              <Zap className="text-[#F38020] w-8 h-8" /> 
+              <Zap className="text-[#F38020] w-8 h-8" />
               Connectivity Transformation
             </DialogTitle>
+            <DialogDescription className="text-muted-foreground text-sm pt-2">
+              Analysis of performance improvements when transitioning from legacy hardware to Cloudflare edge nodes.
+            </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-4 group">
