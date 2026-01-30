@@ -49,12 +49,12 @@ export const SketchyNode = memo(({ id, data }: NodeProps) => {
         "p-2.5 rounded-full transition-all duration-500 border-2",
         mode === 'future' ? "bg-orange-100/50 border-orange-200" : "bg-slate-100 border-slate-200",
         isActivePath && "bg-orange-100 border-[#F38020]"
-      )} style={{ color: isActivePath || isHovered ? '#F38020' : activeColor }}>
+      )} style={{ color: isActivePath ? '#F38020' : (isHovered ? '#F38020' : activeColor) }}>
         <Icon size={22} strokeWidth={2.5} />
       </div>
       <span
         className="text-[10px] font-black font-sans uppercase tracking-tight transition-colors duration-500"
-        style={{ color: isActivePath || isHovered ? '#F38020' : activeColor }}
+        style={{ color: isActivePath ? '#F38020' : (isHovered ? '#F38020' : activeColor) }}
       >
         {data.label as string}
       </span>

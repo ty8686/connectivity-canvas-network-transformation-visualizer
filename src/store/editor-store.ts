@@ -122,12 +122,19 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const { nodes, edges, mode, hoveredNodeId } = get();
     const endNodeIds = nodes.filter(n => !!n.data?.isTrafficEnd).map(n => n.id);
     const trafficStartNodes = nodes.filter(n => !!n.data?.isTrafficStart);
-    const startPoints = [...trafficStartNodes];
+    // 1. Static Paths: Persistent traffic flows from configured start nodes
+    const staticPaths = trafficStartNodes
+      .map(u => findShortestPath(nodes, edges, u.id, endNodeIds))
+      .filter(Boolean) as any[];
+    // 2. Hover Paths: Temporary paths used ONLY for metrics preview calculation
+    let hoverPath = null;
     if (hoveredNodeId && !trafficStartNodes.some(n => n.id === hoveredNodeId)) {
-      const hoveredNode = nodes.find(n => n.id === hoveredNodeId);
-      if (hoveredNode) startPoints.push(hoveredNode);
+      hoverPath = findShortestPath(nodes, edges, hoveredNodeId, endNodeIds);
     }
-    if (startPoints.length === 0 || endNodeIds.length === 0) {
+    // Combine for metrics logic
+    const combinedPathsForMetrics = [...staticPaths];
+    if (hoverPath) combinedPathsForMetrics.push(hoverPath);
+    if (combinedPathsForMetrics.length === 0) {
       set({
         latency: mode === 'future' ? 12 : 240,
         hops: mode === 'future' ? 1 : 4,
@@ -139,31 +146,14 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       });
       return;
     }
-    const paths = startPoints
-      .map(u => findShortestPath(nodes, edges, u.id, endNodeIds))
-      .filter(Boolean) as any[];
-    if (paths.length === 0) {
-      set({
-        activePathNodeIds: [],
-        activePathEdgeIds: [],
-        edgeAnimations: {},
-        latencyDelta: 0,
-        hopsDelta: 0,
-        latency: mode === 'future' ? 12 : 240,
-        hops: mode === 'future' ? 1 : 4
-      });
-      return;
-    }
+    // 3. Update Visuals (activePathNodeIds, activePathEdgeIds, edgeAnimations) 
+    // Using ONLY staticPaths to ensure hover doesn't trigger path highlights
     const allNodeIds = new Set<string>();
     const allEdgeIds = new Set<string>();
     const edgeAnimations: Record<string, EdgeAnimationTiming[]> = {};
-    let totalLatency = 0;
-    let totalHops = 0;
-    paths.forEach(p => {
+    staticPaths.forEach(p => {
       p.nodeIds.forEach((id: string) => allNodeIds.add(id));
       p.edgeIds.forEach((id: string) => allEdgeIds.add(id));
-      totalLatency += p.latency;
-      totalHops += p.hops;
       let cumulativeDuration = 0;
       const pathDurations = p.edgeIds.map((edgeId: string) => {
         const edge = edges.find(e => e.id === edgeId);
@@ -182,8 +172,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         cumulativeDuration += duration;
       });
     });
-    const avgLatency = totalLatency / paths.length;
-    const avgHops = totalHops / paths.length;
+    // 4. Update Telemetry (latency, hops)
+    // Using combinedPathsForMetrics so user sees what the latency WOULD be from that node
+    let totalLatency = 0;
+    let totalHops = 0;
+    combinedPathsForMetrics.forEach(p => {
+      totalLatency += p.latency;
+      totalHops += p.hops;
+    });
+    const avgLatency = totalLatency / combinedPathsForMetrics.length;
+    const avgHops = totalHops / combinedPathsForMetrics.length;
     const legacyBaselineLatency = 240;
     const lDelta = Math.max(-99, Math.round(((legacyBaselineLatency - avgLatency) / legacyBaselineLatency) * 100));
     const hDelta = Math.round((4 / Math.max(1, avgHops)) * 10) / 10;
@@ -204,7 +202,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       set({ legacyBackup: { nodes: [...state.nodes], edges: [...state.edges] } });
       const userNodes = state.nodes.filter(n => n.data?.isTrafficStart);
       const originNodes = state.nodes.filter(n => n.data?.iconType === 'database' || n.data?.iconType === 'server' || n.data?.isTrafficEnd);
-      const avgX = state.nodes.length > 0 
+      const avgX = state.nodes.length > 0
         ? state.nodes.reduce((acc, n) => acc + n.position.x, 0) / state.nodes.length
         : 450;
       const avgY = state.nodes.length > 0

@@ -65,10 +65,10 @@ export const SketchyEdge = memo(({
               pointerEvents: 'none',
               zIndex: 50
             }}
-            className="px-2 py-1 bg-white border-2 border-[#2D2D2D] rounded text-[9px] font-black shadow-[2px_2px_0px_#2D2D2D] backdrop-blur-sm uppercase italic"
+            className="px-2 py-1 bg-white border-2 border-[#2D2D2D] rounded text-[9px] font-black shadow-[3px_3px_0px_#2D2D2D] backdrop-blur-sm uppercase italic"
           >
-            {label && <span className="block border-b border-[#2D2D2D]/10 mb-0.5">{label}</span>}
-            <span className="text-[#F38020]">{weight}ms</span>
+            {label && <span className="block border-b border-[#2D2D2D]/20 mb-0.5 text-[#2D2D2D]">{label}</span>}
+            <span className="text-[#2D2D2D] font-black">{weight}ms</span>
           </div>
         )}
       </EdgeLabelRenderer>
