@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useCallback } from 'react';
 import { useEditorStore } from '@/store/editor-store';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -23,6 +23,10 @@ export function NodeInspector() {
   const deleteNode = useEditorStore(s => s.deleteNode);
   const setSelectedNodeId = useEditorStore(s => s.setSelectedNodeId);
   const node = useMemo(() => nodes.find(n => n.id === selectedId), [nodes, selectedId]);
+  const handleLabelChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!node) return;
+    updateNodeData(node.id, { label: e.target.value });
+  }, [node, updateNodeData]);
   if (!node) return null;
   return (
     <div className="absolute top-24 right-8 z-20 w-80 bg-white border-2 border-[#2D2D2D] p-6 shadow-[8px_8px_0px_#2D2D2D] rounded-xl animate-in fade-in slide-in-from-right-6 duration-300 font-sans text-[#2D2D2D]">
@@ -31,7 +35,12 @@ export function NodeInspector() {
           <h3 className="text-xl font-bold tracking-tight text-[#2D2D2D] uppercase italic">Edit Node</h3>
           <p className="text-[10px] text-[#2D2D2D] opacity-60 font-mono font-medium">UID: {node.id.slice(0, 12)}</p>
         </div>
-        <Button variant="ghost" size="icon" onClick={() => setSelectedNodeId(null)} className="h-8 w-8 rounded-full hover:bg-secondary">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => setSelectedNodeId(null)} 
+          className="h-8 w-8 rounded-full hover:bg-secondary"
+        >
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -41,7 +50,7 @@ export function NodeInspector() {
           <Input
             id="node-label"
             value={String(node.data.label || "")}
-            onChange={(e) => updateNodeData(node.id, { label: e.target.value })}
+            onChange={handleLabelChange}
             className="rounded-md border-2 border-[#2D2D2D] h-10 focus-visible:ring-[#F38020] transition-shadow bg-secondary/20 text-[#2D2D2D] font-bold"
           />
         </div>
@@ -56,7 +65,7 @@ export function NodeInspector() {
                 className="border-2 border-[#2D2D2D] data-[state=checked]:bg-[#F38020] data-[state=checked]:border-[#F38020]"
               />
               <label htmlFor="isTrafficStart" className="text-sm font-bold flex items-center gap-2 cursor-pointer text-[#2D2D2D]">
-                <PlayCircle className="w-4 h-4 text-blue-500" /> Traffic Start
+                <PlayCircle className="w-4 h-4 text-blue-600" /> Traffic Start
               </label>
             </div>
             <div className="flex items-center space-x-2">
@@ -67,7 +76,7 @@ export function NodeInspector() {
                 className="border-2 border-[#2D2D2D] data-[state=checked]:bg-[#F38020] data-[state=checked]:border-[#F38020]"
               />
               <label htmlFor="isTrafficEnd" className="text-sm font-bold flex items-center gap-2 cursor-pointer text-[#2D2D2D]">
-                <Flag className="w-4 h-4 text-red-500" /> Traffic End
+                <Flag className="w-4 h-4 text-rose-600" /> Traffic End
               </label>
             </div>
           </div>

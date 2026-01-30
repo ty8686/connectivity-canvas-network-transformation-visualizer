@@ -5,6 +5,21 @@ import { useEditorStore } from '@/store/editor-store';
 import { SketchyNode } from './node-types';
 import { SketchyEdge } from './edge-types';
 import { useShallow } from 'zustand/react/shallow';
+/**
+ * STATIC CONSTANTS: Defined outside the component to ensure absolute reference stability.
+ * This resolves React Flow warning #002 and prevents unnecessary re-initializations.
+ */
+const NODE_TYPES: NodeTypes = {
+  sketchy: SketchyNode,
+};
+const EDGE_TYPES: EdgeTypes = {
+  sketchy: SketchyEdge,
+};
+const DEFAULT_EDGE_OPTIONS: DefaultEdgeOptions = {
+  type: 'sketchy',
+  animated: true,
+  data: { weight: 1, label: '' }
+};
 export function FlowCanvas() {
   const nodes = useEditorStore(useShallow(s => s.nodes));
   const edges = useEditorStore(useShallow(s => s.edges));
@@ -17,21 +32,6 @@ export function FlowCanvas() {
   const setHoveredNodeId = useEditorStore(s => s.setHoveredNodeId);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
-  /**
-   * MEMOIZATION: We wrap configuration objects in useMemo to prevent 
-   * React Flow from re-initializing and throwing runtime warnings.
-   */
-  const nodeTypes = useMemo<NodeTypes>(() => ({
-    sketchy: SketchyNode,
-  }), []);
-  const edgeTypes = useMemo<EdgeTypes>(() => ({
-    sketchy: SketchyEdge,
-  }), []);
-  const defaultEdgeOptions = useMemo<DefaultEdgeOptions>(() => ({
-    type: 'sketchy',
-    animated: true,
-    data: { weight: 1, label: '' }
-  }), []);
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
@@ -87,11 +87,11 @@ export function FlowCanvas() {
         onPaneClick={onPaneClick}
         onNodeMouseEnter={onNodeMouseEnter}
         onNodeMouseLeave={onNodeMouseLeave}
-        nodeTypes={nodeTypes}
-        edgeTypes={edgeTypes}
+        nodeTypes={NODE_TYPES}
+        edgeTypes={EDGE_TYPES}
         fitView
         deleteKeyCode={['Backspace', 'Delete']}
-        defaultEdgeOptions={defaultEdgeOptions}
+        defaultEdgeOptions={DEFAULT_EDGE_OPTIONS}
         snapToGrid={false}
       >
         <Controls showInteractive={false} className="custom-controls" />

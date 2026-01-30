@@ -30,7 +30,7 @@ export const SketchyEdge = memo(({
   const edgeAnimations = useEditorStore(useShallow(s => s.edgeAnimations[id] || []));
   const isSelected = selectedEdgeId === id;
   const isActivePath = activePathEdgeIds.includes(id);
-  const weight = Number(data?.weight) || 15;
+  const weight = Number(data?.weight) || 0;
   const label = data?.label as string;
   const strokeWidth = mode === 'future' ? 4 : 2;
   const isHighlighted = isSelected || isActivePath;
@@ -41,7 +41,7 @@ export const SketchyEdge = memo(({
         d={edgePath}
         fill="none"
         stroke="transparent"
-        strokeWidth={20}
+        strokeWidth={24}
         className="react-flow__edge-interaction pointer-events-auto cursor-pointer"
       />
       <BaseEdge
@@ -56,18 +56,22 @@ export const SketchyEdge = memo(({
         className="wobbly-line transition-all duration-300"
       />
       <EdgeLabelRenderer>
-        {(label || weight > 0) && (
+        {(label || weight >= 0) && (
           <div
             style={{
               position: 'absolute',
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
               pointerEvents: 'none',
-              zIndex: 50
+              zIndex: 100
             }}
             className="px-2 py-1 bg-white border-2 border-[#2D2D2D] rounded text-[9px] font-bold shadow-[3px_3px_0px_#2D2D2D] backdrop-blur-sm uppercase italic"
           >
-            {label && <span className="block border-b border-[#2D2D2D]/20 mb-0.5 text-[#2D2D2D]">{label}</span>}
-            <span className="text-[#2D2D2D] font-bold">{weight}ms</span>
+            {label && (
+              <span className="block border-b border-[#2D2D2D]/20 mb-0.5 text-[#2D2D2D] whitespace-nowrap">
+                {label}
+              </span>
+            )}
+            <span className="text-[#2D2D2D] font-black">{weight}ms</span>
           </div>
         )}
       </EdgeLabelRenderer>
@@ -83,7 +87,7 @@ export const SketchyEdge = memo(({
             duration: timing.duration,
             delay: timing.delay,
             repeat: Infinity,
-            repeatDelay: timing.totalPathDuration - timing.duration,
+            repeatDelay: Math.max(0, timing.totalPathDuration - timing.duration),
             ease: "linear",
             times: [0, 0.1, 0.9, 1]
           }}
@@ -97,7 +101,7 @@ export const SketchyEdge = memo(({
             d="M -10 -7 L 10 0 L -10 7 Z"
             fill="#F38020"
             stroke="#FFFFFF"
-            strokeWidth="1.5"
+            strokeWidth="2"
             className="packet-glow"
             style={{ filter: 'drop-shadow(0 0 8px rgba(243, 128, 32, 0.9))' }}
           />

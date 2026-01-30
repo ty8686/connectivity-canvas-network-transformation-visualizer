@@ -52,7 +52,7 @@ interface EditorState {
   calculateMetrics: () => void;
 }
 function findShortestPath(nodes: Node[], edges: Edge[], startNodeId: string, endNodeIds: string[]) {
-  if (endNodeIds.length === 0 || !startNodeId) return null;
+  if (!startNodeId || endNodeIds.length === 0) return null;
   if (endNodeIds.includes(startNodeId)) {
     return { latency: 0, hops: 0, nodeIds: [startNodeId], edgeIds: [] };
   }
@@ -120,14 +120,18 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   hopsDelta: 0,
   calculateMetrics: () => {
     const { nodes, edges, mode, hoveredNodeId } = get();
-    if (nodes.length === 0) return;
+    if (nodes.length === 0) {
+      set({ 
+        latency: 0, hops: 0, latencyDelta: 0, hopsDelta: 0, 
+        activePathNodeIds: [], activePathEdgeIds: [], edgeAnimations: {} 
+      });
+      return;
+    }
     const endNodeIds = nodes.filter(n => !!n.data?.isTrafficEnd).map(n => n.id);
     const trafficStartNodes = nodes.filter(n => !!n.data?.isTrafficStart);
-    // 1. Static Paths: Persistent traffic flows from configured start nodes
     const staticPaths = trafficStartNodes
       .map(u => findShortestPath(nodes, edges, u.id, endNodeIds))
       .filter(Boolean) as any[];
-    // 2. Hover Paths: Temporary paths used ONLY for metrics preview calculation
     let hoverPath = null;
     if (hoveredNodeId && !trafficStartNodes.some(n => n.id === hoveredNodeId)) {
       hoverPath = findShortestPath(nodes, edges, hoveredNodeId, endNodeIds);
@@ -146,7 +150,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       });
       return;
     }
-    // 3. Update Visuals
     const allNodeIds = new Set<string>();
     const allEdgeIds = new Set<string>();
     const edgeAnimations: Record<string, EdgeAnimationTiming[]> = {};
@@ -163,7 +166,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       p.edgeIds.forEach((edgeId: string, idx: number) => {
         const duration = pathDurations[idx];
         if (!edgeAnimations[edgeId]) edgeAnimations[edgeId] = [];
-        // Use pIdx as a seed for jitter if multiple paths overlap
         edgeAnimations[edgeId].push({
           delay: cumulativeDuration + (pIdx * 0.1),
           duration: duration,
@@ -172,7 +174,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         cumulativeDuration += duration;
       });
     });
-    // 4. Update Telemetry (latency, hops)
     let totalLatency = 0;
     let totalHops = 0;
     combinedPathsForMetrics.forEach(p => {
@@ -181,7 +182,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     });
     const avgLatency = totalLatency / combinedPathsForMetrics.length;
     const avgHops = totalHops / combinedPathsForMetrics.length;
-    // SAFEGUARD: Ensure legacy baseline is non-zero
     const legacyBaselineLatency = 240;
     const lDelta = Math.max(-99, Math.round(((legacyBaselineLatency - avgLatency) / legacyBaselineLatency) * 100));
     const hDelta = Math.round((4 / Math.max(1, avgHops)) * 10) / 10;
@@ -212,11 +212,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
         id: 'cf-edge-auto',
         type: 'sketchy',
         position: { x: avgX, y: avgY },
-        data: { 
-          label: 'Cloudflare Connectivity Cloud', 
-          iconType: 'cloud', 
+        data: {
+          label: 'Cloudflare Connectivity Cloud',
+          iconType: 'cloud',
           isPrimary: true,
-          isTrafficEnd: false 
+          isTrafficEnd: false
         }
       };
       const newNodes = [
@@ -262,6 +262,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   setSelectedNodeId: (id) => set({ selectedNodeId: id, selectedEdgeId: null }),
   setSelectedEdgeId: (id) => set({ selectedEdgeId: id, selectedNodeId: null }),
   setHoveredNodeId: (id) => {
+    if (get().hoveredNodeId === id) return;
     set({ hoveredNodeId: id });
     get().calculateMetrics();
   },
