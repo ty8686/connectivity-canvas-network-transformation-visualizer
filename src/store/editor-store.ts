@@ -120,6 +120,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   hopsDelta: 0,
   calculateMetrics: () => {
     const { nodes, edges, mode, hoveredNodeId } = get();
+    if (nodes.length === 0) return;
     const endNodeIds = nodes.filter(n => !!n.data?.isTrafficEnd).map(n => n.id);
     const trafficStartNodes = nodes.filter(n => !!n.data?.isTrafficStart);
     // 1. Static Paths: Persistent traffic flows from configured start nodes
@@ -131,7 +132,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     if (hoveredNodeId && !trafficStartNodes.some(n => n.id === hoveredNodeId)) {
       hoverPath = findShortestPath(nodes, edges, hoveredNodeId, endNodeIds);
     }
-    // Combine for metrics logic
     const combinedPathsForMetrics = [...staticPaths];
     if (hoverPath) combinedPathsForMetrics.push(hoverPath);
     if (combinedPathsForMetrics.length === 0) {
@@ -146,12 +146,11 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       });
       return;
     }
-    // 3. Update Visuals (activePathNodeIds, activePathEdgeIds, edgeAnimations) 
-    // Using ONLY staticPaths to ensure hover doesn't trigger path highlights
+    // 3. Update Visuals
     const allNodeIds = new Set<string>();
     const allEdgeIds = new Set<string>();
     const edgeAnimations: Record<string, EdgeAnimationTiming[]> = {};
-    staticPaths.forEach(p => {
+    staticPaths.forEach((p, pIdx) => {
       p.nodeIds.forEach((id: string) => allNodeIds.add(id));
       p.edgeIds.forEach((id: string) => allEdgeIds.add(id));
       let cumulativeDuration = 0;
@@ -164,8 +163,9 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       p.edgeIds.forEach((edgeId: string, idx: number) => {
         const duration = pathDurations[idx];
         if (!edgeAnimations[edgeId]) edgeAnimations[edgeId] = [];
+        // Use pIdx as a seed for jitter if multiple paths overlap
         edgeAnimations[edgeId].push({
-          delay: cumulativeDuration,
+          delay: cumulativeDuration + (pIdx * 0.1),
           duration: duration,
           totalPathDuration: totalPathDuration
         });
@@ -173,7 +173,6 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       });
     });
     // 4. Update Telemetry (latency, hops)
-    // Using combinedPathsForMetrics so user sees what the latency WOULD be from that node
     let totalLatency = 0;
     let totalHops = 0;
     combinedPathsForMetrics.forEach(p => {
@@ -182,6 +181,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     });
     const avgLatency = totalLatency / combinedPathsForMetrics.length;
     const avgHops = totalHops / combinedPathsForMetrics.length;
+    // SAFEGUARD: Ensure legacy baseline is non-zero
     const legacyBaselineLatency = 240;
     const lDelta = Math.max(-99, Math.round(((legacyBaselineLatency - avgLatency) / legacyBaselineLatency) * 100));
     const hDelta = Math.round((4 / Math.max(1, avgHops)) * 10) / 10;
@@ -202,21 +202,21 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       set({ legacyBackup: { nodes: [...state.nodes], edges: [...state.edges] } });
       const userNodes = state.nodes.filter(n => n.data?.isTrafficStart);
       const originNodes = state.nodes.filter(n => n.data?.iconType === 'database' || n.data?.iconType === 'server' || n.data?.isTrafficEnd);
-      const avgX = state.nodes.length > 0
-        ? state.nodes.reduce((acc, n) => acc + n.position.x, 0) / state.nodes.length
+      const avgX = state.nodes.length > 0 
+        ? state.nodes.reduce((acc, n) => acc + n.position.x, 0) / state.nodes.length 
         : 450;
-      const avgY = state.nodes.length > 0
-        ? state.nodes.reduce((acc, n) => acc + n.position.y, 0) / state.nodes.length
+      const avgY = state.nodes.length > 0 
+        ? state.nodes.reduce((acc, n) => acc + n.position.y, 0) / state.nodes.length 
         : 250;
       const cfNode: Node = {
         id: 'cf-edge-auto',
         type: 'sketchy',
         position: { x: avgX, y: avgY },
-        data: {
-          label: 'Cloudflare Connectivity Cloud',
-          iconType: 'cloud',
+        data: { 
+          label: 'Cloudflare Connectivity Cloud', 
+          iconType: 'cloud', 
           isPrimary: true,
-          isTrafficEnd: false
+          isTrafficEnd: false 
         }
       };
       const newNodes = [
@@ -324,7 +324,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       const response = await api<{ items: Project[] }>('/api/projects');
       set({ projects: response?.items ?? [] });
     } catch (err) {
-      console.error("Fetch projects failed:", err);
+      console.error("[FETCH PROJECTS FAILED]", err);
       set({ projects: [] });
     }
   },
@@ -345,7 +345,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       set({ projectId: result.id, isLoading: false });
       await get().fetchProjects();
     } catch (err) {
-      console.error("Save failed:", err);
+      console.error("[SAVE PROJECT FAILED]", err);
       set({ isLoading: false });
       throw err;
     }
@@ -366,6 +366,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       });
       get().calculateMetrics();
     } catch (err) {
+      console.error("[LOAD PROJECT FAILED]", err);
       set({ isLoading: false });
       throw err;
     }
@@ -375,7 +376,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
       await api(`/api/projects/${id}`, { method: 'DELETE' });
       set({ projects: get().projects.filter(p => p.id !== id) });
     } catch (err) {
-      console.error("Delete failed:", err);
+      console.error("[DELETE PROJECT FAILED]", err);
     }
   },
   createNewProject: () => {

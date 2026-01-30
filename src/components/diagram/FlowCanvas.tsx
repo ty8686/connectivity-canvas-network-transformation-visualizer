@@ -1,26 +1,10 @@
-import React, { useCallback, useRef } from 'react';
+import React, { useCallback, useRef, useMemo } from 'react';
 import { ReactFlow, Controls, NodeTypes, EdgeTypes, useReactFlow, DefaultEdgeOptions } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { useEditorStore } from '@/store/editor-store';
 import { SketchyNode } from './node-types';
 import { SketchyEdge } from './edge-types';
 import { useShallow } from 'zustand/react/shallow';
-/**
- * IMPORTANT: These configuration objects MUST remain outside the component scope.
- * Moving them inside will cause React Flow to re-initialize on every render,
- * leading to performance degradation and console warnings.
- */
-const nodeTypes: NodeTypes = {
-  sketchy: SketchyNode,
-};
-const edgeTypes: EdgeTypes = {
-  sketchy: SketchyEdge,
-};
-const defaultEdgeOptions: DefaultEdgeOptions = {
-  type: 'sketchy',
-  animated: true,
-  data: { weight: 1, label: '' }
-};
 export function FlowCanvas() {
   const nodes = useEditorStore(useShallow(s => s.nodes));
   const edges = useEditorStore(useShallow(s => s.edges));
@@ -33,6 +17,21 @@ export function FlowCanvas() {
   const setHoveredNodeId = useEditorStore(s => s.setHoveredNodeId);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { screenToFlowPosition } = useReactFlow();
+  /**
+   * MEMOIZATION: We wrap configuration objects in useMemo to prevent 
+   * React Flow from re-initializing and throwing runtime warnings.
+   */
+  const nodeTypes = useMemo<NodeTypes>(() => ({
+    sketchy: SketchyNode,
+  }), []);
+  const edgeTypes = useMemo<EdgeTypes>(() => ({
+    sketchy: SketchyEdge,
+  }), []);
+  const defaultEdgeOptions = useMemo<DefaultEdgeOptions>(() => ({
+    type: 'sketchy',
+    animated: true,
+    data: { weight: 1, label: '' }
+  }), []);
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';

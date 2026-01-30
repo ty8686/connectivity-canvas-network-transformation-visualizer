@@ -51,6 +51,7 @@ export default function EditorPage() {
     }
   };
   const displayLatency = nodes.length > 0 && globalLatency > 0 ? `${Math.round(globalLatency)}ms` : "--";
+  const displayHops = nodes.length > 0 && globalHops > 0 ? globalHops : "--";
   return (
     <div className="flex flex-col h-screen bg-background overflow-hidden font-sans">
       <header className="h-16 border-b border-[#2D2D2D]/10 flex items-center justify-between px-4 md:px-6 bg-white z-30 shadow-sm gap-2 md:gap-4">
@@ -81,7 +82,7 @@ export default function EditorPage() {
             <div className="w-px h-6 bg-slate-200" />
             <div className="flex flex-col">
               <span className="text-[7px] font-black uppercase text-muted-foreground leading-none">Total Hops</span>
-              <span className="text-[10px] md:text-xs font-black text-[#2D2D2D]">{globalHops || "--"}</span>
+              <span className="text-[10px] md:text-xs font-black text-[#2D2D2D]">{displayHops}</span>
             </div>
           </div>
         </div>
@@ -99,8 +100,8 @@ export default function EditorPage() {
             onClick={() => setMode('future')}
             className={cn(
               "flex-1 flex items-center justify-center gap-1.5 md:gap-2 py-1.5 px-2 md:px-3 rounded-full text-[9px] md:text-[10px] font-black uppercase tracking-widest transition-all duration-300 z-10",
-              mode === 'future'
-                ? "bg-[#F38020] text-white shadow-[0_0_15px_rgba(243,128,32,0.3)]"
+              mode === 'future' 
+                ? "bg-[#F38020] text-white shadow-[0_0_15px_rgba(243,128,32,0.3)]" 
                 : "text-slate-400 hover:text-slate-600"
             )}
           >
@@ -137,7 +138,7 @@ export default function EditorPage() {
               disabled={isLoading || nodes.length === 0}
               className={cn(
                 "bg-[#F38020] hover:bg-[#D14615] text-white font-black h-14 rounded-full shadow-2xl transition-all hover:scale-105 active:scale-95 border-4 border-white min-w-[180px]",
-                isLoading ? "opacity-90" : ""
+                isLoading ? "opacity-90 cursor-not-allowed" : ""
               )}
             >
               {isLoading ? (
